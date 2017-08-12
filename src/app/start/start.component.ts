@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import * as Phaser from 'phaser';
 
 @Component({
   selector: 'app-start',
@@ -7,7 +8,9 @@ import { Component, OnInit } from '@angular/core';
 })
 export class StartComponent implements OnInit {
 
-  constructor() { }
+  constructor() { 
+    
+  }
 
   ngOnInit() {
   }

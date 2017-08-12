@@ -19,9 +19,13 @@
       "testTsconfig": "tsconfig.spec.json",
       "prefix": "app",
       "styles": [
-        "styles.css"
+        "styles.scss"
       ],
-      "scripts": [],
+      "scripts": [
+        "../node_modules/phaser/build/custom/pixi.js",
+        "../node_modules/phaser/build/custom/p2.js",
+        "../node_modules/phaser/build/custom/phaser-split.js"
+      ],
       "environmentSource": "environments/environment.ts",
       "environments": {
         "dev": "environments/environment.ts",
@@ -54,7 +58,7 @@
     }
   },
   "defaults": {
-    "styleExt": "css",
+    "styleExt": "scss",
     "component": {}
   }
 }
