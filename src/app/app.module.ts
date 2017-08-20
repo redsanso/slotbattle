@@ -5,6 +5,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { AppComponent } from './app.component';
 import { StartModule } from "./start/start.module";
 import { StartComponent } from "./start/start.component";
+import { GameModule } from "./game/game.module";
 
 let routes : Routes = [
   { path : 'start', component : StartComponent, pathMatch : 'full' }
@@ -17,7 +18,8 @@ let routes : Routes = [
   imports: [
     BrowserModule, 
     RouterModule.forRoot(routes),
-    StartModule
+    StartModule,
+    GameModule
   ],
   providers: [],
   bootstrap: [AppComponent]
