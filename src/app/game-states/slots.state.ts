@@ -31,13 +31,15 @@ export class SlotsState implements GameState {
             slotTween.onComplete.add(() => {
                 let scrollRectangle = new Phaser.Rectangle((slotsStartX + (100 * index)), slotsStartY, slotsSrc.width, slotsSrc.height);
                 let listView = new ListView(this.game, this.game.world, scrollRectangle, {
-                    direction : 'y'
+                    direction : 'y',
+                    overflow : 360,
+                    padding : 10
                 });
 
-                listView.add(this.game.add.sprite(0, scrollRectangle.y - 45, 'coin'));
-                listView.add(this.game.add.sprite(0, scrollRectangle.y + 45, 'coin'));
-                listView.add(this.game.add.sprite(0, scrollRectangle.y + 135, 'coin'));
-                listView.add(this.game.add.sprite(0, scrollRectangle.y + 225, 'coin'));
+                listView.add(this.game.add.sprite(5, scrollRectangle.y - 45, 'coin'));
+                listView.add(this.game.add.sprite(5, scrollRectangle.y + 45, 'coin'));
+                listView.add(this.game.add.sprite(5, scrollRectangle.y + 135, 'coin'));
+                listView.add(this.game.add.sprite(5, scrollRectangle.y + 225, 'coin'));
                 
                 this.slotScrollers.push(listView);
             }, this);
