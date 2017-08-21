@@ -41,16 +41,16 @@ export class ParallaxState implements GameState {
     }
 
     reloadCurrentSubState(){
-        this.currentSubState.preload();
         this.currentSubState.create();
     }
 
     switchState(key : string){
+        this.currentSubState.shutdown();
         this.currentSubState = this.subStates[key];
         this.reloadCurrentSubState();
     }
     
-    preload(){
+    preload(){ 
         this.game.load.image('parallax-0', 'assets/parallax/parallax-mountain-bg.png');
         this.game.load.image('parallax-1', 'assets/parallax/parallax-mountain-montain-far.png');
         this.game.load.image('parallax-2', 'assets/parallax/parallax-mountain-mountains.png');
@@ -60,8 +60,8 @@ export class ParallaxState implements GameState {
         Object.keys(this.subStates).forEach((key : string) => {
             let state : GameState = this.subStates[key];
             state.game = this.game;
+            state.preload();
         });
-        this.currentSubState.preload();
     }
 
     create(){
@@ -99,5 +99,9 @@ export class ParallaxState implements GameState {
         });
 
         this.currentSubState.render();
+    }
+
+    shutdown(){
+
     }
 } 

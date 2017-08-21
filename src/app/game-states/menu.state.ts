@@ -28,8 +28,17 @@ export class MenuState implements GameState {
        
     }
 
-    public shutdown(){
-
+    public shutdown = () => {
+        let logoTween = this.game.add
+            .tween(this.logo)
+            .to({ alpha : 0, x : 10 }, 600, Phaser.Easing.Linear.None);
+        
+        let startButtonTween = this.game.add
+            .tween(this.startButton)
+            .to({ alpha : 0, x : 10 }, 600, Phaser.Easing.Linear.None);
+        
+        logoTween.start();
+        startButtonTween.start();
     }
 
     /* Utility methods */
@@ -49,12 +58,6 @@ export class MenuState implements GameState {
         this.startButton.onInputUp.add(this.onStartButtonClick);
     }
 
-    public onStartButtonClick = () => {
-        /* load another state */
-
-    }
-    
-    public onOptionButtonClick = () => {
-        /* load another state */
-    }
+    public onStartButtonClick : () => void = () => {};
+    public onOptionButtonClick : () => void = () => {};
 }

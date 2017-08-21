@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import * as Phaser from 'phaser';
 import { MenuState } from "../game-states/menu.state";
+import { SlotsState } from "../game-states/slots.state";
 import { ParallaxState } from "../game-states/parallax.state";
 
 @Component({
@@ -13,8 +14,17 @@ export class StartComponent implements OnInit {
   constructor() { }
   ngOnInit() {
     let parallaxState = new ParallaxState();
+
+    let menuState = new MenuState();
+    menuState.onStartButtonClick = () => {
+      parallaxState.switchState('slots');
+    };
+ 
+    let slotsState = new SlotsState();
+
     parallaxState.setStates({
-      'menu' : new MenuState()
+      'menu' : menuState,
+      'slots' : slotsState
     }, 'menu');
 
     this.currentState = parallaxState;

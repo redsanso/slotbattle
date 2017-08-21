@@ -6,4 +6,5 @@ export interface GameState extends Phaser.State {
     preload : () => void;
     create : () => void;
     render : () => void;
-} 
+    shutdown : () => void;
+}  
