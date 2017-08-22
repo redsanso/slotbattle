@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import {ListView} from 'phaser-list-view';
+import { ListView } from 'phaser-list-view';
 import { GameState } from './game.state';
 
 export class SlotsState implements GameState {
@@ -8,6 +8,8 @@ export class SlotsState implements GameState {
 
     slots : Phaser.Image[] = [];
     slotScrollers : ListView[] = [];
+
+    /* Lifecycle events */
 
     preload = () => {
         this.game.load.image('slotbar', 'assets/png/Slotbar.png');
@@ -40,19 +42,36 @@ export class SlotsState implements GameState {
                 listView.add(this.game.add.sprite(5, scrollRectangle.y + 45, 'coin'));
                 listView.add(this.game.add.sprite(5, scrollRectangle.y + 135, 'coin'));
                 listView.add(this.game.add.sprite(5, scrollRectangle.y + 225, 'coin'));
-                
+
+                listView.scroller.events.onUpdate.add((o) => {
+                  console.log(o);
+                });
+
                 this.slotScrollers.push(listView);
             }, this);
             slotTween.start();
         });
 
-    } 
+        this.game.add.button(10, 10, null, () => {
+          this.runSlots();
+        });
+
+    }
 
     render = () => {
-        
-    } 
+
+    }
 
     shutdown = () => {
-        
+
     }
-} 
+
+    /* Utils */
+
+    runSlots(){
+      this.slotScrollers.forEach((listView : ListView) => {
+        listView.scroller.events.onInputDown.dispatch();
+        listView.scroller.events.onInputMove.dispatch({ total : Math.floor(Math.random() * 1000) });
+      });
+    }
+}
