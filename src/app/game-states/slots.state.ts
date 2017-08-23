@@ -22,6 +22,7 @@ export class SlotsState implements GameState {
 
     preload = () => {
         this.game.load.image('slotbar', 'assets/png/Slotbar.png');
+        // http://gaurav.munjal.us/Universal-LPC-Spritesheet-Character-Generator/
         this.game.load.spritesheet('player', 'assets/spritesheet/player.png', 64, 64);
         this.coinSprites = [];
         for(let i = 0; i < 3; i++){
