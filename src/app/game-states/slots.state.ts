@@ -13,6 +13,9 @@ export class SlotsState implements GameState {
     slotCount : number = 5;
     slots : Phaser.Image[] = [];
     slotScrollers : ListView[] = [];
+    slotButton : Phaser.Button;
+
+    tweensToComplete : number = 0;
 
     /* Lifecycle events */
 
@@ -46,10 +49,11 @@ export class SlotsState implements GameState {
             slotTween.start(); 
         });
 
-        this.game.add.button(10, 10, 'lol', () => {
+        this.slotButton = this.game.add.button(10, 10, 'lol', () => {
           this.runSlots();
         });
-
+        this.slotButton.inputEnabled = true;
+        this.tweensToComplete = 0;
     }
 
     render = () => {
@@ -72,6 +76,7 @@ export class SlotsState implements GameState {
             snapping : true
         });
         listView.id = this.slotScrollers.length;
+        listView.slotsHeight = slotsHeight;
 
         for(var y = -Math.floor(this.coinHeight / 2), i = 0; i < 100; y += this.coinHeight, i++){
             let randomCoin = Math.floor(Math.random() * this.coinSprites.length);
@@ -83,22 +88,36 @@ export class SlotsState implements GameState {
         listView.scroller.events.onComplete.add(() => {
             let absPosition = Math.abs(listView.position) + this.coinHeight;
             let currentSprite = _.find(listView.items, (item) => item.position.y == absPosition);
-            console.log(`Slot ${listView.id} has value ${currentSprite.slotValue}`);
+            //console.log(`Slot ${listView.id} has value ${currentSprite.slotValue}`);
+            this.tweensToComplete--;
+
+            if(this.tweensToComplete == 0){
+                this.slotButton.inputEnabled = true;
+            }
         });
 
         this.slotScrollers.push(listView);
     }
 
     runSlots(){
-      this.slotScrollers.forEach((listView : ListView, index : number) => {
-          let target = Math.floor(Math.random() * listView.length);
-          if((target - Math.floor(this.coinHeight / 2)) % this.coinHeight > 0){
-              target -= target % this.coinHeight;
-          }
-
-          this.game.time.events.add((Phaser.Timer.SECOND * index / 2), () => {
-            listView.scroller.tweenTo(2 + (this.slotScrollers.length - index), -target);
-          }, this);
-      });
+        if(this.slotButton.inputEnabled && this.tweensToComplete == 0){
+            this.tweensToComplete = this.slotScrollers.length;
+            this.slotButton.inputEnabled = false;
+            this.slotScrollers.forEach((listView : ListView, index : number) => {
+                let target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
+                target = listView.position;
+                while(target == listView.position){
+                  target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
+                }
+      
+                if((target - Math.floor(this.coinHeight / 2)) % this.coinHeight > 0){
+                    target -= target % this.coinHeight;
+                }
+      
+                this.game.time.events.add((Phaser.Timer.SECOND * index / this.slotCount), () => {
+                  listView.scroller.tweenTo(2 + (this.slotScrollers.length - index), -target);
+                }, this);
+            });
+        }
     }
 }
