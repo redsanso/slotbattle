@@ -12,6 +12,7 @@ export class SlotsState implements GameState {
 
     slotCount : number = 5;
     slots : Phaser.Image[] = [];
+    slotsGroup : Phaser.Group;
     slotScrollers : ListView[] = [];
     slotButton : Phaser.Button;
 
@@ -28,31 +29,40 @@ export class SlotsState implements GameState {
     }
 
     create = () => {
+        // cached
         let slotsSrc = this.game.cache.getImage('slotbar');
-        let slotsStartX = this.game.world.width - (slotsSrc.width * this.slotCount) - 20; // margin
-        let slotsStartY = Math.floor((this.game.world.height - slotsSrc.height) / 2);
-
         let coinSrc = this.game.cache.getImage('coin0');
+
+        this.slotsGroup = this.game.add.group();
+        this.slotsGroup.position.setTo((this.game.world.width - (slotsSrc.width * this.slotCount)) / 2, 20);
+
+        this.slotsGroup.width = slotsSrc.width * this.slotCount;
+        this.slotsGroup.height = slotsSrc.height;
         this.coinHeight = coinSrc.height;
 
         this.slots = [];
         for(var s = 0; s < this.slotCount; s++){
-            this.slots.push(this.game.add.tileSprite(this.game.world.width, slotsStartY, slotsSrc.width, slotsSrc.height - this.coinHeight, 'slotbar'));
+            let slotbar = this.game.add.tileSprite(this.game.world.width, 0, slotsSrc.width, slotsSrc.height - this.coinHeight, 'slotbar');
+            //let slotbar = this.slotsGroup.create(slotsStartX, slotsStartY, 'slotbar');
+            this.slotsGroup.add(slotbar);
+            this.slots.push(slotbar);
         }
 
         this.slots.forEach((slot : Phaser.Image, index : number) => {
             let slotTween = this.game.add.tween(slot)
-                .to({ x : (slotsStartX + (100 * index)) }, 600, Phaser.Easing.Bounce.Out, true, 300 * index);
+                .to({ x : (100 * index) }, 600, Phaser.Easing.Bounce.Out, true, 300 * index);
             slotTween.onComplete.add(() => {
-                this.addPhaserListViewSlots((slotsStartX + (100 * index)), slotsStartY, slotsSrc.width, slotsSrc.height - this.coinHeight);
+                this.addPhaserListViewSlots((this.slotsGroup.x + (100 * index)), this.slotsGroup.y, slotsSrc.width, slotsSrc.height - this.coinHeight);
             }, this);
-            slotTween.start(); 
+            slotTween.start();
         });
+
+
 
         this.slotButton = this.game.add.button(10, 10, 'lol', () => {
           this.runSlots();
         });
-        this.slotButton.inputEnabled = true;
+        this.slotButton.visible = true;
         this.tweensToComplete = 0;
     }
 
@@ -80,19 +90,21 @@ export class SlotsState implements GameState {
 
         for(var y = -Math.floor(this.coinHeight / 2), i = 0; i < 100; y += this.coinHeight, i++){
             let randomCoin = Math.floor(Math.random() * this.coinSprites.length);
-            let sprite = this.game.add.sprite(5, y, `coin${randomCoin}`);
-            sprite.slotValue = randomCoin + 1;
-            listView.add(sprite);
+            let coinSprite = this.game.add.sprite(5, y, `coin${randomCoin}`);
+            coinSprite.slotValue = randomCoin + 1;
+            listView.add(coinSprite);
         }
 
         listView.scroller.events.onComplete.add(() => {
             let absPosition = Math.abs(listView.position) + this.coinHeight;
-            let currentSprite = _.find(listView.items, (item) => item.position.y == absPosition);
+            let currentSprite = _.find(listView.items, (item) => {
+              return (item.position.y <= absPosition) && (item.position.y > absPosition - this.coinHeight);
+            });
             //console.log(`Slot ${listView.id} has value ${currentSprite.slotValue}`);
             this.tweensToComplete--;
 
             if(this.tweensToComplete == 0){
-                this.slotButton.inputEnabled = true;
+                this.slotButton.visible = true;
             }
         });
 
@@ -100,20 +112,20 @@ export class SlotsState implements GameState {
     }
 
     runSlots(){
-        if(this.slotButton.inputEnabled && this.tweensToComplete == 0){
+        if(this.slotButton.visible && this.tweensToComplete == 0){
             this.tweensToComplete = this.slotScrollers.length;
-            this.slotButton.inputEnabled = false;
+            this.slotButton.visible = false;
             this.slotScrollers.forEach((listView : ListView, index : number) => {
                 let target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
                 target = listView.position;
-                while(target == listView.position){
+                while(Math.abs(target - listView.position) < this.coinHeight * 3){
                   target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
                 }
-      
+
                 if((target - Math.floor(this.coinHeight / 2)) % this.coinHeight > 0){
                     target -= target % this.coinHeight;
                 }
-      
+
                 this.game.time.events.add((Phaser.Timer.SECOND * index / this.slotCount), () => {
                   listView.scroller.tweenTo(2 + (this.slotScrollers.length - index), -target);
                 }, this);

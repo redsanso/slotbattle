@@ -13,7 +13,7 @@ export class GameComponent implements OnInit {
   current: Phaser.Game;
 
   constructor() {
-    this.current = new Phaser.Game(800, 600, Phaser.AUTO, 'game');
+    this.current = new Phaser.Game(document.body.clientWidth, document.body.clientHeight, Phaser.AUTO, 'game');
   }
 
   ngOnInit() {
