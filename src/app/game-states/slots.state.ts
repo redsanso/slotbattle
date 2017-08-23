@@ -22,6 +22,7 @@ export class SlotsState implements GameState {
 
     preload = () => {
         this.game.load.image('slotbar', 'assets/png/Slotbar.png');
+        this.game.load.spritesheet('player', 'assets/spritesheet/player.png', 64, 64);
         this.coinSprites = [];
         for(let i = 0; i < 3; i++){
             this.coinSprites.push(this.game.load.image(`coin${i}`, `assets/png/coin${i}.png`));
@@ -33,6 +34,11 @@ export class SlotsState implements GameState {
         let slotsSrc = this.game.cache.getImage('slotbar');
         let coinSrc = this.game.cache.getImage('coin0');
 
+        let playerSrc = this.game.cache.getImage('player');
+        let player = this.game.add.sprite(120, this.game.world.height - 64, 'player');
+        player.animations.add('run');
+        player.animations.play('run', 10, true);
+
         this.slotsGroup = this.game.add.group();
         this.slotsGroup.position.setTo((this.game.world.width - (slotsSrc.width * this.slotCount)) / 2, 20);
 
@@ -43,7 +49,6 @@ export class SlotsState implements GameState {
         this.slots = [];
         for(var s = 0; s < this.slotCount; s++){
             let slotbar = this.game.add.tileSprite(this.game.world.width, 0, slotsSrc.width, slotsSrc.height - this.coinHeight, 'slotbar');
-            //let slotbar = this.slotsGroup.create(slotsStartX, slotsStartY, 'slotbar');
             this.slotsGroup.add(slotbar);
             this.slots.push(slotbar);
         }
