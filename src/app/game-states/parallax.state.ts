@@ -7,7 +7,7 @@ interface ParallaxLayer {
     fixed   ?: boolean;
 }
 
-export class ParallaxState implements GameState { 
+export class ParallaxState implements GameState {
     scale : number;
     key : string = "parallax";
     layers : ParallaxLayer[];
@@ -37,7 +37,7 @@ export class ParallaxState implements GameState {
             src : this.game.add.sprite(0, 0, key),
             speed : speed,
             fixed : (speed == 0)
-        }); 
+        });
     }
 
     reloadCurrentSubState(){
@@ -49,8 +49,8 @@ export class ParallaxState implements GameState {
         this.currentSubState = this.subStates[key];
         this.reloadCurrentSubState();
     }
-    
-    preload(){ 
+
+    preload(){
         this.game.load.image('parallax-0', 'assets/parallax/parallax-mountain-bg.png');
         this.game.load.image('parallax-1', 'assets/parallax/parallax-mountain-montain-far.png');
         this.game.load.image('parallax-2', 'assets/parallax/parallax-mountain-mountains.png');
@@ -87,13 +87,13 @@ export class ParallaxState implements GameState {
                 if(layer.src.position.x + (layer.src.texture.width * layer.src.scale.x) > 0){
                     layer.src.position.x += layer.speed;
                 } else {
-                    layer.src.position.setTo(bufferedLayer.src.position.x + (Math.floor((bufferedLayer.src.texture.width - 1.2) * bufferedLayer.src.scale.x)), 0);                    
+                    layer.src.position.setTo(bufferedLayer.src.position.x + (Math.floor((bufferedLayer.src.texture.width - 1.2) * bufferedLayer.src.scale.x)), 0);
                 }
 
                 if(bufferedLayer.src.position.x + (bufferedLayer.src.texture.width * bufferedLayer.src.scale.x) > 0){
                     bufferedLayer.src.position.x += bufferedLayer.speed;
                 } else {
-                    bufferedLayer.src.position.setTo(layer.src.position.x + (Math.floor((layer.src.texture.width - 1.2) * layer.src.scale.x)), 0);                    
+                    bufferedLayer.src.position.setTo(layer.src.position.x + (Math.floor((layer.src.texture.width - 1.2) * layer.src.scale.x)), 0);
                 }
             }
         });
@@ -104,4 +104,4 @@ export class ParallaxState implements GameState {
     shutdown(){
 
     }
-} 
+}
