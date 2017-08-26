@@ -7,6 +7,8 @@ interface ParallaxLayer {
     fixed   ?: boolean;
 }
 
+export const GROUND_LEVEL : number = 180;
+
 export class ParallaxState implements GameState {
     scale : number;
     key : string = "parallax";
@@ -27,17 +29,27 @@ export class ParallaxState implements GameState {
     }
 
     addLayer(key : string, index : number, speed : number){
+        let layerSrc = this.game.add.sprite(0, -GROUND_LEVEL, key);
+        layerSrc.pivot.setTo(0);
+        let bufferedLayerSrc = this.game.add.sprite(0, -GROUND_LEVEL, key);
+        bufferedLayerSrc.pivot.setTo(0);
+
         this.layers.splice(index, 0, {
-            src : this.game.add.sprite(0, 0, key),
+            src : layerSrc,
             speed : speed,
             fixed : (speed == 0)
         });
 
         this.bufferedLayers.splice(index, 0, {
-            src : this.game.add.sprite(0, 0, key),
+            src : bufferedLayerSrc,
             speed : speed,
             fixed : (speed == 0)
         });
+    }
+
+    addGround(){
+        let grassSrc = this.game.cache.getImage('grass');
+        this.game.add.tileSprite(0, this.game.world.height - GROUND_LEVEL, this.game.world.width, grassSrc.height, 'grass');
     }
 
     reloadCurrentSubState(){
@@ -56,6 +68,7 @@ export class ParallaxState implements GameState {
         this.game.load.image('parallax-2', 'assets/parallax/parallax-mountain-mountains.png');
         this.game.load.image('parallax-3', 'assets/parallax/parallax-mountain-trees.png');
         this.game.load.image('parallax-4', 'assets/parallax/parallax-mountain-foreground-trees.png');
+        this.game.load.image('grass', 'assets/parallax/grass.jpg');
 
         Object.keys(this.subStates).forEach((key : string) => {
             let state : GameState = this.subStates[key];
@@ -70,6 +83,7 @@ export class ParallaxState implements GameState {
         this.addLayer('parallax-2', 2, -.8);
         this.addLayer('parallax-3', 3, -1.2);
         this.addLayer('parallax-4', 4, -1.6);
+        this.addGround();
         this.currentSubState.create();
     }
 
@@ -87,13 +101,13 @@ export class ParallaxState implements GameState {
                 if(layer.src.position.x + (layer.src.texture.width * layer.src.scale.x) > 0){
                     layer.src.position.x += layer.speed;
                 } else {
-                    layer.src.position.setTo(bufferedLayer.src.position.x + (Math.floor((bufferedLayer.src.texture.width - 1.2) * bufferedLayer.src.scale.x)), 0);
+                    layer.src.position.setTo(bufferedLayer.src.position.x + (Math.floor((bufferedLayer.src.texture.width - 1.2) * bufferedLayer.src.scale.x)), -GROUND_LEVEL);
                 }
 
                 if(bufferedLayer.src.position.x + (bufferedLayer.src.texture.width * bufferedLayer.src.scale.x) > 0){
                     bufferedLayer.src.position.x += bufferedLayer.speed;
                 } else {
-                    bufferedLayer.src.position.setTo(layer.src.position.x + (Math.floor((layer.src.texture.width - 1.2) * layer.src.scale.x)), 0);
+                    bufferedLayer.src.position.setTo(layer.src.position.x + (Math.floor((layer.src.texture.width - 1.2) * layer.src.scale.x)), -GROUND_LEVEL);
                 }
             }
         });

@@ -188,7 +188,7 @@ export class SlotsState implements GameState {
         listView.slotValue = 0;
         let target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
         target = listView.position;
-        while(Math.abs(target - listView.position) < this.coinHeight * 3){
+        while(Math.abs(target - listView.position) < this.coinHeight * 6){
           target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
         }
 
@@ -197,7 +197,7 @@ export class SlotsState implements GameState {
         }
 
         this.game.time.events.add((Phaser.Timer.SECOND * index / this.slotCount), () => {
-          listView.scroller.tweenTo(2 + (this.slotScrollers.length - index), -target);
+          listView.scroller.tweenTo(1.4, -target);
         }, this);
       });
     }
