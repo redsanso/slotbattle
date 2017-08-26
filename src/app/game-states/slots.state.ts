@@ -1,43 +1,10 @@
 import * as Phaser from 'phaser';
 import { ListView } from 'phaser-list-view';
 import { GameState } from './game.state';
+import { CustomAnimationGroup, CustomAnimationFrames } from "../model/custom-animation";
+import { GROUND_LEVEL } from "./parallax.state";
 import * as _ from 'lodash';
-
-
-interface ICustomAnimationFrames {
-  rowIndex : number;
-  colIndex : number;
-  frames   : number[];
-}
-
-class CustomAnimationFrames implements ICustomAnimationFrames {
-  name : string;
-  rowIndex : number;
-  colIndex : number;
-  frames   : number[];
-  constructor(name : string, rowIndex : number, colIndex : number, frameCount : number, player : Phaser.Sprite){
-    this.name = name;
-    this.rowIndex = rowIndex;
-    this.colIndex = colIndex;
-    let startIndex = (rowIndex * 13 + colIndex);
-    this.frames = _.range(startIndex, startIndex + frameCount);
-    player.animations.add(this.name, this.frames);
-  }
-}
-
-class CustomAnimationGroup {
-  up : CustomAnimationFrames;
-  left : CustomAnimationFrames;
-  down : CustomAnimationFrames;
-  right : CustomAnimationFrames;
-
-  constructor(name : string, rowIndex : number, colIndex : number, frameCount : number, player : Phaser.Sprite){
-    this.up = new CustomAnimationFrames(`${name}_up`, rowIndex, colIndex, frameCount, player);
-    this.left = new CustomAnimationFrames(`${name}_left`, rowIndex + 1, colIndex, frameCount, player);
-    this.down = new CustomAnimationFrames(`${name}_down`, rowIndex + 2, colIndex, frameCount, player);
-    this.right = new CustomAnimationFrames(`${name}_right`, rowIndex + 3, colIndex, frameCount, player);
-  }
-}
+import { Human } from "../model/entities";
 
 export class SlotsState implements GameState {
   game : Phaser.Game;
@@ -54,7 +21,8 @@ export class SlotsState implements GameState {
 
   tweensToComplete : number = 0;
 
-  player : Phaser.Sprite;
+  //player : Phaser.Sprite;
+  player : Human;
 
   /* Lifecycle events */
 
@@ -62,6 +30,7 @@ export class SlotsState implements GameState {
     this.game.load.image('slotbar', 'assets/png/Slotbar.png');
     // http://gaurav.munjal.us/Universal-LPC-Spritesheet-Character-Generator/
     this.game.load.spritesheet('player', 'assets/spritesheet/player.png', 64, 64);
+    this.game.load.image('attackButton', 'assets/png/AttackButton.png');
     this.coinSprites = [];
     for(let i = 0; i < 3; i++){
       this.coinSprites.push(this.game.load.image(`coin${i}`, `assets/png/coin${i}.png`));
@@ -73,7 +42,6 @@ export class SlotsState implements GameState {
 
     this.addSlots();
     this.addPlayer();
-    this.addSlotsButton();
   };
 
   render = () => {
@@ -88,22 +56,8 @@ export class SlotsState implements GameState {
 
   addPlayer(){
     let player = this.game.add.sprite(this.game.world.width, this.game.world.height, 'player');
-    player.pivot.setTo(.5);
-    player.scale.setTo(2);
-    player.position.setTo(120, (this.game.world.height - 200));
-
-    let animations = {
-      praise : new CustomAnimationGroup("praise", 0, 0, 7, player),
-      what : new CustomAnimationGroup("cmon", 4, 0, 8, player),
-      walk : new CustomAnimationGroup("walk", 8, 0, 9, player),
-      hail : new CustomAnimationGroup("hail", 12, 0, 6, player),
-      idle : new CustomAnimationGroup("idle", 12, 0, 2, player),
-      attack : new CustomAnimationGroup("attack", 16, 0, 13, player),
-      die : new CustomAnimationFrames("die", 20, 0, 6, player)
-    };
-
-    player.animations.play("idle_right", 4, true);
-    this.player = player;
+    let scale = 2;
+    this.player = new Human(10, player, 120, (player.game.world.height - (GROUND_LEVEL * scale)), scale);
   }
 
   addSlots(){
@@ -111,7 +65,8 @@ export class SlotsState implements GameState {
     let coinSrc = this.game.cache.getImage('coin0');
 
     this.slotsGroup = this.game.add.group();
-    this.slotsGroup.position.setTo((this.game.world.width - (slotsSrc.width * this.slotCount)) / 2, 20);
+    //this.slotsGroup.position.setTo((this.game.world.width - (slotsSrc.width * this.slotCount)) / 2, 20);
+    this.slotsGroup.position.setTo(20, 20);
 
     this.slotsGroup.width = slotsSrc.width * this.slotCount;
     this.slotsGroup.height = slotsSrc.height;
@@ -132,6 +87,8 @@ export class SlotsState implements GameState {
       }, this);
       slotTween.start();
     });
+
+    this.addSlotsButton();
   }
 
   addPhaserListViewSlots(slotsStartX, slotsStartY, slotsWidth, slotsHeight){
@@ -154,7 +111,7 @@ export class SlotsState implements GameState {
       listView.add(coinSprite);
     }
 
-    listView.scroller.events.onComplete.add(() => {
+    let onScrollComplete = () => {
       let absPosition = Math.abs(listView.position) + this.coinHeight;
       let currentSprite = _.find(listView.items, (item) => {
         return (item.position.y <= absPosition) && (item.position.y > absPosition - this.coinHeight);
@@ -167,15 +124,23 @@ export class SlotsState implements GameState {
         this.performAttack();
         this.slotButton.visible = true;
       }
-    });
+    };
+
+    listView.scroller.events.onComplete.add(onScrollComplete);
 
     this.slotScrollers.push(listView);
   }
 
   addSlotsButton(){
-    this.slotButton = this.game.add.button(10, 10, 'lol', () => {
+    console.log('this.slotsGroup.position.x ' + this.slotsGroup.position.x);
+    console.log('this.slotsGroup.x ' + this.slotsGroup.x);
+    let button = this.game.cache.getImage('attackButton');
+    let buttonX = this.slotsGroup.position.x + (this.slotsGroup.width - button.width / 2);
+    let buttonY = this.slotsGroup.height - button.height + 40;
+    this.slotButton = this.game.add.button(buttonX, buttonY, 'attackButton', () => {
       this.runSlots();
     });
+    this.slotsGroup.add(this.slotButton);
     this.slotButton.visible = true;
     this.tweensToComplete = 0;
   }
@@ -183,16 +148,17 @@ export class SlotsState implements GameState {
   runSlots(){
     if(this.slotButton.visible && this.tweensToComplete == 0){
       this.tweensToComplete = this.slotScrollers.length;
+      this.player.beforeAttack();
       this.slotButton.visible = false;
       this.slotScrollers.forEach((listView : ListView, index : number) => {
         listView.slotValue = 0;
         let target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
         target = listView.position;
-        while(Math.abs(target - listView.position) < this.coinHeight * 6){
+        while(Math.abs(target - listView.position) < this.coinHeight * 3){
           target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
         }
 
-        if((target - Math.floor(this.coinHeight / 2)) % this.coinHeight > 0){
+        if((target - Math.floor(this.coinHeight / 2)) % this.coinHeight != 0){
           target -= target % this.coinHeight;
         }
 
@@ -205,12 +171,14 @@ export class SlotsState implements GameState {
 
   performAttack = () => {
     let damage = this.slotScrollers.reduce((accumulator : number, scroller : ListView) => {
-      console.log(scroller);
       return accumulator + scroller.slotValue;
     }, 0);
-    this.player.animations.play("attack_right", 13, false).onComplete.add(() => {
+
+    this.player.attack(damage, null).onComplete.addOnce(() => {
       console.log(`Total damage = ${damage}`);
-      this.player.animations.play("idle_right", 4, true);
+      this.player.afterAttack().onComplete.addOnce(() => {
+        this.player.idle();
+      });
     });
   }
 }

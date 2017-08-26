@@ -7,7 +7,7 @@ interface ParallaxLayer {
     fixed   ?: boolean;
 }
 
-export const GROUND_LEVEL : number = 180;
+export const GROUND_LEVEL : number = 80;
 
 export class ParallaxState implements GameState {
     scale : number;
@@ -68,7 +68,7 @@ export class ParallaxState implements GameState {
         this.game.load.image('parallax-2', 'assets/parallax/parallax-mountain-mountains.png');
         this.game.load.image('parallax-3', 'assets/parallax/parallax-mountain-trees.png');
         this.game.load.image('parallax-4', 'assets/parallax/parallax-mountain-foreground-trees.png');
-        this.game.load.image('grass', 'assets/parallax/grass.jpg');
+        this.game.load.image('grass', 'assets/parallax/grass-sepia-running-small.jpg');
 
         Object.keys(this.subStates).forEach((key : string) => {
             let state : GameState = this.subStates[key];
