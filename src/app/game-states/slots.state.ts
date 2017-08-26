@@ -32,7 +32,7 @@ export class SlotsState implements GameState {
     this.game.load.spritesheet('player', 'assets/spritesheet/player.png', 64, 64);
     this.game.load.image('attackButton', 'assets/png/AttackButton.png');
     this.coinSprites = [];
-    for(let i = 0; i < 3; i++){
+    for(let i = 0; i < 7; i++){
       this.coinSprites.push(this.game.load.image(`coin${i}`, `assets/png/coin${i}.png`));
     }
   };
@@ -154,7 +154,7 @@ export class SlotsState implements GameState {
         listView.slotValue = 0;
         let target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
         target = listView.position;
-        while(Math.abs(target - listView.position) < this.coinHeight * 3){
+        while(Math.abs(target - listView.position) < this.coinHeight * 6){
           target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
         }
 
