@@ -21,6 +21,9 @@ export class StartComponent implements OnInit {
     };
  
     let slotsState = new SlotsState();
+    slotsState.onBackButtonClick = () => {
+      parallaxState.switchState('menu');
+    };
 
     parallaxState.setStates({
       'menu' : menuState,

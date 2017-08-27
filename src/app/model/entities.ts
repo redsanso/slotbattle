@@ -7,6 +7,7 @@ export interface ILiving {
 
     applyDamage: (damage: number) => void;
     isDead: () => boolean;
+    destroy: () => void;
 }
 
 export interface IAttacker {
@@ -66,6 +67,9 @@ export class Human implements ILiving, IAttacker, IAnimable {
     };
     isDead = () => {
         return this.currentHP <= 0;
+    };
+    destroy = () => {
+        this.sprite.destroy();
     };
 
     beforeAttack = () => {
