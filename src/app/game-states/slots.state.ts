@@ -41,8 +41,6 @@ export class SlotsState implements GameState {
 
   create = () => {
     // cached
-
-    this.addBackButton();
     this.addSlots();
     this.addPlayer();
   };
@@ -105,6 +103,7 @@ export class SlotsState implements GameState {
       slotTween.onComplete.add(() => {
         this.addPhaserListViewSlots((this.slotsGroup.x + (100 * index)), this.slotsGroup.y, slotsSrc.width, slotsSrc.height - this.coinHeight);
         if(index == this.slots.length - 1){
+          this.addBackButton();
           this.addSlotsButton();
         }
       }, this);
