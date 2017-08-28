@@ -64,7 +64,7 @@ export class SlotsState implements GameState {
     this.slotButton = null;
     this.backButton.destroy();
     this.backButton = null;
-  }; 
+  };
 
   /* Utils */
 
@@ -104,11 +104,12 @@ export class SlotsState implements GameState {
         .to({ x: (100 * index) }, 600, Phaser.Easing.Bounce.Out, true, 300 * index);
       slotTween.onComplete.add(() => {
         this.addPhaserListViewSlots((this.slotsGroup.x + (100 * index)), this.slotsGroup.y, slotsSrc.width, slotsSrc.height - this.coinHeight);
+        if(index == this.slots.length - 1){
+          this.addSlotsButton();
+        }
       }, this);
       slotTween.start();
     });
-
-    this.addSlotsButton();
   }
 
   addPhaserListViewSlots(slotsStartX, slotsStartY, slotsWidth, slotsHeight) {
@@ -155,7 +156,7 @@ export class SlotsState implements GameState {
 
   addSlotsButton() {
     let button = this.game.cache.getImage('attackButton');
-    let buttonX = this.slotsGroup.position.x + (this.slotsGroup.width - button.width / 2);
+    let buttonX = (this.slotsGroup.width - button.width) / 2;
     let buttonY = this.slotsGroup.height - button.height + 40;
     this.slotButton = this.game.add.button(buttonX, buttonY, 'attackButton', () => {
       this.runSlots();
