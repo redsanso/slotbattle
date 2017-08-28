@@ -16,6 +16,7 @@ export interface IAttacker {
   beforeAttack: () => Phaser.Animation;
   attack: (damage: number, target: ILiving) => Phaser.Animation;
   afterAttack: () => Phaser.Animation;
+  heal: (amount : number) => Phaser.Animation;
   die:() => Phaser.Animation;
 }
 
@@ -102,8 +103,36 @@ export class Living implements ILiving, IAttacker, IAnimable {
     return bitmapData;
   }
 
+  _createDamageBubble(damage : number){
+    let damageTextStyle = { font : '12px Courier', stroke : '#000000', strokeThickness : 10, fill : 'yellow', fontWeight : 'bold' };
+    let damageText = this.sprite.game.add.text(this.sprite.position.x, this.sprite.position.y, `${damage}`, damageTextStyle);
+    damageText.anchor.setTo(.5);
+    let damageTextTween = this.sprite.game.add.tween(damageText).to({ y : this.sprite.position.y - 300, alpha : 0, fontSize : 48 }, 2000, Phaser.Easing.Exponential.Out, true);
+    damageTextTween.onComplete.addOnce(() => {
+      damageText.destroy();
+    });
+    damageTextTween.start();
+  }
+
+  _createHealBubble(amount : number){
+    let damageTextStyle = { font : '12px Courier', stroke : '#000000', strokeThickness : 10, fill : 'green', fontWeight : 'bold' };
+    let damageText = this.sprite.game.add.text(this.sprite.position.x, this.sprite.position.y, `${amount}`, damageTextStyle);
+    damageText.anchor.setTo(.5);
+    let damageTextTween = this.sprite.game.add.tween(damageText).to({ y : this.sprite.position.y - 300, alpha : 0, fontSize : 48 }, 2000, Phaser.Easing.Exponential.Out, true);
+    damageTextTween.onComplete.addOnce(() => {
+      damageText.destroy();
+    });
+    damageTextTween.start();
+  }
+
+  _updateHealthBar(){
+    this.healthFG.scale.setTo((this.currentHP / this.maxHP), 1);
+  }
+
   // interfaces method implementations
   applyDamage = (damage: number) => {
+    this._createDamageBubble(damage);
+
     if(this.currentHP - damage > 0){
       this.currentHP -= damage;
     } else {
@@ -111,7 +140,7 @@ export class Living implements ILiving, IAttacker, IAnimable {
       this.die();
     }
 
-    this.healthFG.scale.setTo((this.currentHP / this.maxHP), 1);
+    this._updateHealthBar();
   };
   isDead = () => {
     return this.currentHP <= 0;
@@ -138,6 +167,24 @@ export class Living implements ILiving, IAttacker, IAnimable {
   };
   afterAttack = () => {
     return this.startAnimation('afterAttack', false);
+  };
+  heal = (amount : number) => {
+    this._createHealBubble(amount);
+
+    if(this.currentHP + amount > this.maxHP){
+      this.currentHP = this.maxHP;
+    } else {
+      this.currentHP += amount;
+    }
+
+    this.startAnimation('spellcast', false);
+    this._updateHealthBar();
+  };
+  randomHeal = () => {
+    let healableAmount = this.maxHP - this.currentHP;
+    if(healableAmount > 0){
+      this.heal(Math.ceil(Math.random() * healableAmount));
+    }
   };
 
   changeDirection = (direction: direction, loop : boolean = true) => {

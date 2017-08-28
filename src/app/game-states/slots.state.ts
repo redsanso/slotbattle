@@ -175,8 +175,6 @@ export class SlotsState implements GameState {
 
       if (this.tweensToComplete == 0) {
         this.performAttack();
-        this.slotButton.enabled = true;
-        this.slotButton.visible = true;
       }
     };
 
@@ -230,6 +228,7 @@ export class SlotsState implements GameState {
     this.player.attack(damage, this.enemy).onComplete.addOnce(() => {
       if(this.enemy.isDead()){
         this.enemy.die().onComplete.addOnce(() => {
+          this.player.randomHeal();
           this.addNextEnemyButton();
         });
       } else {
@@ -243,6 +242,8 @@ export class SlotsState implements GameState {
             } else {
               this.player.hit().onComplete.addOnce(() => {
                 this.player.idle();
+                this.slotButton.enabled = true;
+                this.slotButton.visible = true;
               });
             }
           });

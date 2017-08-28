@@ -3,54 +3,60 @@ import { GameState } from './game.state';
 import { ParallaxState } from './parallax.state';
 
 export class MenuState implements GameState {
-    game : Phaser.Game;
+    game: Phaser.Game;
     key: string = "menu";
 
-    logoSrc : any;
-    logo : Phaser.Image;
+    logoSrc: any;
+    logo: Phaser.Image;
 
-    startButtonSrc : any;
-    startButton : Phaser.Button;
+    startButtonSrc: any;
+    startButton: Phaser.Button;
 
-    /* Phaser lifecycle */ 
+    /* Phaser lifecycle */
 
     public preload = () => {
-        this.game.load.image('logo', './assets/logo.png');        
+        this.game.load.image('logo', './assets/logo.png');
         this.game.load.image('startButton', '/assets/png/StartButton.png');
     }
 
     public create = () => {
         this._createLogo();
-        this._createMenuButtons(); 
+        this._createMenuButtons();
     }
- 
+
     public render = () => {
-       
+
     }
 
     public shutdown = () => {
         let logoTween = this.game.add
             .tween(this.logo)
-            .to({ alpha : 0, x : 10 }, 600, Phaser.Easing.Linear.None);
-        
+            .to({ alpha: 0, x: 10 }, 600, Phaser.Easing.Linear.None);
+        logoTween.onComplete.addOnce(() => {
+            logoTween.target.destroy();
+        });
+
         let startButtonTween = this.game.add
             .tween(this.startButton)
-            .to({ alpha : 0, x : 10 }, 600, Phaser.Easing.Linear.None);
-        
+            .to({ alpha: 0, x: 10 }, 600, Phaser.Easing.Linear.None);
+        startButtonTween.onComplete.addOnce(() => {
+            startButtonTween.target.destroy();
+        });
+
         logoTween.start();
         startButtonTween.start();
     }
 
     /* Utility methods */
 
-    private _createLogo(){
+    private _createLogo() {
         this.logoSrc = this.game.cache.getImage('logo');
         this.logo = this.game.add.sprite(0, 0, 'logo');
         this.logo.position.x = this.game.world.width - (this.logoSrc.width * this.logo.scale.x);
         this.logo.position.y = (this.game.world.height * 1 / 4) - ((this.logoSrc.height * this.logo.scale.y) / 2);
     }
 
-    private _createMenuButtons(){
+    private _createMenuButtons() {
         this.startButtonSrc = this.game.cache.getImage('startButton');
         this.startButton = this.game.add.button(0, this.game.world.height - 100, 'startButton');
         this.startButton.position.x = this.game.world.width - (this.startButtonSrc.width * this.startButton.scale.x) - 48;
@@ -59,6 +65,6 @@ export class MenuState implements GameState {
     }
 
     // external hooks
-    public onStartButtonClick : () => void = () => {};
-    public onOptionButtonClick : () => void = () => {};
+    public onStartButtonClick: () => void = () => { };
+    public onOptionButtonClick: () => void = () => { };
 }
