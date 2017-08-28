@@ -204,13 +204,15 @@ export class SlotsState implements GameState {
       return accumulator + scroller.slotValue;
     }, 0);
 
-    this.player.attack(damage, null).onComplete.addOnce(() => {
-      console.log(`Total damage = ${damage}`);
+    this.player.attack(damage, this.enemy).onComplete.addOnce(() => {
+      this.enemy.hit().onComplete.addOnce(() => {
+        this.enemy.idle();
+      });
       this.player.afterAttack().onComplete.addOnce(() => {
         this.player.idle();
       });
     });
-  }
+  };
 
   // external hooks
   public onBackButtonClick: () => void = () => { };

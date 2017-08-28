@@ -8,6 +8,7 @@ export interface ILiving {
   applyDamage: (damage: number) => void;
   isDead: () => boolean;
   destroy: () => void;
+  hit :() => Phaser.Animation;
 }
 
 export interface IAttacker {
@@ -55,7 +56,8 @@ export class Living implements ILiving, IAttacker, IAnimable {
       beforeAttack: new A.CustomAnimationGroup("beforeAttack", 16, 0, 9, sprite),
       attack: new A.CustomAnimationGroup("attack", 16, 9, 2, sprite),
       afterAttack: new A.CustomAnimationGroup("afterAttack", 16, 11, 1, sprite),
-      die: new A.CustomAnimationFrames("die", 20, 0, 6, sprite)
+      die: new A.CustomAnimationFrames("die", 20, 0, 6, sprite),
+      hit: new A.CustomAnimationFrames("hit", 20, 0, 4, sprite, true)
     };
 
     this.sprite.pivot.setTo(.5);
@@ -67,6 +69,7 @@ export class Living implements ILiving, IAttacker, IAnimable {
 
   // interfaces method implementations
   applyDamage = (damage: number) => {
+    console.log('Hit for ' + damage + '!');
     this.currentHP -= damage;
   };
   isDead = () => {
@@ -74,6 +77,9 @@ export class Living implements ILiving, IAttacker, IAnimable {
   };
   destroy = () => {
     this.sprite.destroy();
+  };
+  hit = () => {
+    return this.startAnimation('hit', false);
   };
 
   beforeAttack = () => {
@@ -108,8 +114,9 @@ export class Living implements ILiving, IAttacker, IAnimable {
     return this.sprite.animations.play(directionAnimationName, frames, loop);
   };
   stopAnimation = (animationName ?: string) => {
-    let animation = animationName ? this.animations[animationName] : this.animations[this.currentAnimationName];
-    let directionAnimationName = (animation instanceof A.CustomAnimationGroup) ? `${animationName}_${this.direction}` : animationName;
+    let name = animationName ? animationName : this.currentAnimationName;
+    let animation = this.animations[name];
+    let directionAnimationName = (animation instanceof A.CustomAnimationGroup) ? `${name}_${this.direction}` : name;
     console.log(`trying to stop ${directionAnimationName}`);
     this.sprite.animations.stop(directionAnimationName);
   };

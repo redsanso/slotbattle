@@ -13,17 +13,20 @@ export class CustomAnimationFrames implements ICustomAnimationFrames {
   colIndex : number;
   frames   : number[];
 
-  constructor(name : string, rowIndex : number, colIndex : number, frameCount : number, player : Phaser.Sprite){
+  constructor(name : string, rowIndex : number, colIndex : number, frameCount : number, player : Phaser.Sprite, bounce : boolean = false){
     this.name = name;
     this.rowIndex = rowIndex;
     this.colIndex = colIndex;
     let startIndex = (rowIndex * 13 + colIndex);
     this.frames = _.range(startIndex, startIndex + frameCount);
+    if(bounce) {
+      this.frames.concat(_.rangeRight(startIndex, startIndex + frameCount));
+    }
     player.animations.add(this.name, this.frames);
   }
 
   getFramesCount(){
-    return this.frames.length;
+    return this.frames.length * 2;
   }
 }
 
