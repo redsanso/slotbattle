@@ -107,7 +107,7 @@ export class Living implements ILiving, IAttacker, IAnimable {
     let damageTextStyle = { font : '12px Courier', stroke : '#000000', strokeThickness : 10, fill : 'yellow', fontWeight : 'bold' };
     let damageText = this.sprite.game.add.text(this.sprite.position.x, this.sprite.position.y, `${damage}`, damageTextStyle);
     damageText.anchor.setTo(.5);
-    let damageTextTween = this.sprite.game.add.tween(damageText).to({ y : this.sprite.position.y - 300, alpha : 0, fontSize : 48 }, 2000, Phaser.Easing.Exponential.Out, true);
+    let damageTextTween = this.sprite.game.add.tween(damageText).to({ y : this.sprite.position.y - 300, alpha : 0, fontSize : 48 }, 4000, Phaser.Easing.Exponential.Out, true);
     damageTextTween.onComplete.addOnce(() => {
       damageText.destroy();
     });
@@ -118,7 +118,7 @@ export class Living implements ILiving, IAttacker, IAnimable {
     let damageTextStyle = { font : '12px Courier', stroke : '#000000', strokeThickness : 10, fill : 'green', fontWeight : 'bold' };
     let damageText = this.sprite.game.add.text(this.sprite.position.x, this.sprite.position.y, `${amount}`, damageTextStyle);
     damageText.anchor.setTo(.5);
-    let damageTextTween = this.sprite.game.add.tween(damageText).to({ y : this.sprite.position.y - 300, alpha : 0, fontSize : 48 }, 2000, Phaser.Easing.Exponential.Out, true);
+    let damageTextTween = this.sprite.game.add.tween(damageText).to({ y : this.sprite.position.y - 300, alpha : 0, fontSize : 48 }, 4000, Phaser.Easing.Exponential.Out, true);
     damageTextTween.onComplete.addOnce(() => {
       damageText.destroy();
     });

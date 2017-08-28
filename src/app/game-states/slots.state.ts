@@ -4,7 +4,7 @@ import { GameState } from './game.state';
 import { CustomAnimationGroup, CustomAnimationFrames } from "../model/custom-animation";
 import { GROUND_LEVEL } from "./parallax.state";
 import * as _ from 'lodash';
-import {Human, Orc, Living} from "../model/entities";
+import { Human, Orc, Living } from "../model/entities";
 
 export class SlotsState implements GameState {
   game: Phaser.Game;
@@ -20,14 +20,16 @@ export class SlotsState implements GameState {
   slotButton: Phaser.Button;
   backButton: Phaser.Button;
   nextEnemyButton: Phaser.Button;
+  lastEvent: string;
+  lastEventMessage: Phaser.Text;
 
   tweensToComplete: number = 0;
 
   //player : Phaser.Sprite;
   player: Human;
-  enemy : Orc;
+  enemy: Orc;
 
-  PLAYER_MARGIN_OFFSET : number = 120;
+  PLAYER_MARGIN_OFFSET: number = 120;
 
   /* Lifecycle events */
 
@@ -51,6 +53,7 @@ export class SlotsState implements GameState {
     this.addSlots();
     this.addPlayer();
     this.addEnemy();
+    this.addLastEventMessage();
   };
 
   render = () => {
@@ -60,8 +63,8 @@ export class SlotsState implements GameState {
   shutdown = () => {
     this.slotsGroup.destroy();
     this.slotsGroup = null;
-    this.slotScrollers.forEach((scroller : ListView) => scroller.destroy());
-    this.slots.forEach((slot : Phaser.Image) => slot.destroy());
+    this.slotScrollers.forEach((scroller: ListView) => scroller.destroy());
+    this.slots.forEach((slot: Phaser.Image) => slot.destroy());
     this.slotScrollers = [];
     this.slots = [];
     this.player.destroy();
@@ -72,7 +75,7 @@ export class SlotsState implements GameState {
     this.slotButton = null;
     this.backButton.destroy();
     this.backButton = null;
-    if(this.nextEnemyButton){
+    if (this.nextEnemyButton) {
       this.nextEnemyButton.destroy();
       this.nextEnemyButton = null;
     }
@@ -86,7 +89,7 @@ export class SlotsState implements GameState {
     });
   }
 
-  addNextEnemyButton(){
+  addNextEnemyButton() {
     let buttonSrc = this.game.cache.getImage('nextEnemyButton');
     let buttonX = this.enemy.sprite.position.x - (buttonSrc.width / 2);
     let buttonY = this.enemy.sprite.position.y - (this.enemy.sprite.height * 2 / 3) - (buttonSrc.height / 4);
@@ -95,6 +98,8 @@ export class SlotsState implements GameState {
       this.nextEnemyButton = null;
       this.enemy.destroy();
       this.addEnemy();
+      this.slotButton.enabled = true;
+      this.slotButton.visible = true;
     });
   }
 
@@ -104,10 +109,15 @@ export class SlotsState implements GameState {
     this.player = new Human(100, player, this.PLAYER_MARGIN_OFFSET, (player.game.world.height - GROUND_LEVEL), scale, 'idle');
   }
 
-  addEnemy(){
+  addEnemy() {
     let enemy = this.game.add.sprite(this.game.world.width, this.game.world.height, 'orc');
     let scale = 2;
     this.enemy = new Orc(100, enemy, this.game.world.width - this.PLAYER_MARGIN_OFFSET, (enemy.game.world.height - GROUND_LEVEL), scale, 'idle');
+  }
+
+  addLastEventMessage() {
+    let lastEventMessageStyle = { font: '16px Arial Black' };
+    this.lastEventMessage = this.game.add.text((this.game.world.width / 2) + 20, 60, `Last event: \n${this.lastEvent || ""}`, lastEventMessageStyle);
   }
 
   addSlots() {
@@ -134,7 +144,7 @@ export class SlotsState implements GameState {
         .to({ x: (100 * index) }, 600, Phaser.Easing.Bounce.Out, true, 300 * index);
       slotTween.onComplete.add(() => {
         this.addPhaserListViewSlots((this.slotsGroup.x + (100 * index)), this.slotsGroup.y, slotsSrc.width, slotsSrc.height - this.coinHeight);
-        if(index == this.slots.length - 1){
+        if (index == this.slots.length - 1) {
           this.addBackButton();
           this.addSlotsButton();
         }
@@ -226,21 +236,27 @@ export class SlotsState implements GameState {
     }, 0);
 
     this.player.attack(damage, this.enemy).onComplete.addOnce(() => {
-      if(this.enemy.isDead()){
+      this.updateLastEventMessage(`Player hits enemy for ${damage * this.player.attackModifier} damage`, 'yellow');
+      if (this.enemy.isDead()) {
         this.enemy.die().onComplete.addOnce(() => {
+          let previousHP = this.player.currentHP;
           this.player.randomHeal();
+          let updatedHP = this.player.currentHP;
+          this.updateLastEventMessage(`Player hits enemy for ${damage * this.player.attackModifier} damage. Enemy is dead!\nPlayer heals ${updatedHP - previousHP} HP!`, 'green');
           this.addNextEnemyButton();
         });
       } else {
         this.enemy.hit().onComplete.addOnce(() => {
           let enemyDamage = Math.ceil(Math.random() * 20);
           this.enemy.attack(enemyDamage, this.player).onComplete.addOnce(() => {
-            if(this.player.isDead()){
+            if (this.player.isDead()) {
+              this.updateLastEventMessage(`Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage. Player is dead :(`, 'red');
               this.player.die().onComplete.addOnce(() => {
                 this.onBackButtonClick();
               });
             } else {
               this.player.hit().onComplete.addOnce(() => {
+                this.updateLastEventMessage(`Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`, 'red');
                 this.player.idle();
                 this.slotButton.enabled = true;
                 this.slotButton.visible = true;
@@ -254,6 +270,12 @@ export class SlotsState implements GameState {
         this.player.idle();
       });
     });
+  };
+
+  updateLastEventMessage = (message: string, fill : string) => {
+    this.lastEvent = message;
+    this.lastEventMessage.fill = fill;
+    this.lastEventMessage.text = `Last event: \n${this.lastEvent || ""}`;
   };
 
   // external hooks
