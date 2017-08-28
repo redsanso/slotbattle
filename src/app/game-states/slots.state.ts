@@ -23,8 +23,8 @@ export class SlotsState implements GameState {
   tweensToComplete: number = 0;
 
   //player : Phaser.Sprite;
-  player: Living;
-  enemy : Living;
+  player: Human;
+  enemy : Orc;
 
   /* Lifecycle events */
 
@@ -78,13 +78,13 @@ export class SlotsState implements GameState {
   addPlayer() {
     let player = this.game.add.sprite(this.game.world.width, this.game.world.height, 'player');
     let scale = 2;
-    this.player = new Human(10, player, 120, (player.game.world.height - (GROUND_LEVEL * scale)), scale);
+    this.player = new Human(10, player, 120, (player.game.world.height - (GROUND_LEVEL * scale)), scale, 'idle');
   }
 
   addEnemy(){
     let enemy = this.game.add.sprite(this.game.world.width, this.game.world.height, 'orc');
     let scale = 2;
-    this.enemy = new Orc(10, enemy, this.game.world.width - (120 + 64 * scale), (enemy.game.world.height - (GROUND_LEVEL * scale)), scale);
+    this.enemy = new Orc(10, enemy, this.game.world.width - (120 + 64 * scale), (enemy.game.world.height - (GROUND_LEVEL * scale)), scale, 'idle');
   }
 
   addSlots() {
@@ -176,6 +176,7 @@ export class SlotsState implements GameState {
 
   runSlots() {
     if (this.slotButton.visible && this.tweensToComplete == 0) {
+      this.enemy.stopAnimation();
       this.tweensToComplete = this.slotScrollers.length;
       this.player.beforeAttack();
       this.slotButton.visible = false;
