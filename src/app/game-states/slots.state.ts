@@ -26,6 +26,8 @@ export class SlotsState implements GameState {
   player: Human;
   enemy : Orc;
 
+  PLAYER_MARGIN_OFFSET : number = 120;
+
   /* Lifecycle events */
 
   preload = () => {
@@ -61,6 +63,8 @@ export class SlotsState implements GameState {
     this.slots = [];
     this.player.destroy();
     this.player = null;
+    this.enemy.destroy();
+    this.enemy = null;
     this.slotButton.destroy();
     this.slotButton = null;
     this.backButton.destroy();
@@ -78,13 +82,13 @@ export class SlotsState implements GameState {
   addPlayer() {
     let player = this.game.add.sprite(this.game.world.width, this.game.world.height, 'player');
     let scale = 2;
-    this.player = new Human(10, player, 120, (player.game.world.height - (GROUND_LEVEL * scale)), scale, 'idle');
+    this.player = new Human(100, player, this.PLAYER_MARGIN_OFFSET, (player.game.world.height - GROUND_LEVEL), scale, 'idle');
   }
 
   addEnemy(){
     let enemy = this.game.add.sprite(this.game.world.width, this.game.world.height, 'orc');
     let scale = 2;
-    this.enemy = new Orc(10, enemy, this.game.world.width - (120 + 64 * scale), (enemy.game.world.height - (GROUND_LEVEL * scale)), scale, 'idle');
+    this.enemy = new Orc(100, enemy, this.game.world.width - this.PLAYER_MARGIN_OFFSET, (enemy.game.world.height - GROUND_LEVEL), scale, 'idle');
   }
 
   addSlots() {

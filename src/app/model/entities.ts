@@ -43,6 +43,10 @@ export class Living implements ILiving, IAttacker, IAnimable {
   currentAnimationName : string;
   sprite: Phaser.Sprite;
 
+  healthBarGroup: Phaser.Group;
+  healthBG : Phaser.Sprite;
+  healthFG : Phaser.Sprite;
+
   constructor(maxHp: number, sprite: Phaser.Sprite, x : number, y : number, scale : number = 1, startAnimationName : string = 'idle') {
     this.maxHP = maxHp;
     this.currentHP = this.maxHP;
@@ -60,23 +64,55 @@ export class Living implements ILiving, IAttacker, IAnimable {
       hit: new A.CustomAnimationFrames("hit", 20, 0, 4, sprite, true)
     };
 
-    this.sprite.pivot.setTo(.5);
+    // Sprite pivot is set to center
+    this.sprite.anchor.setTo(.5);
     this.sprite.scale.setTo(scale);
     this.sprite.position.setTo(x, y);
+
+    this._createHealthBar();
 
     this.idle();
   }
 
+  // utils
+
+  _createHealthBar(){
+    this.healthBarGroup = this.sprite.game.add.group();
+    let HB_WIDTH = 128;
+    let HB_HEIGHT = 24;
+    let HB_X = this.sprite.position.x - (HB_WIDTH / 2);
+    let HB_Y = this.sprite.position.y - (this.sprite.height * 2 / 3);
+    this.healthBarGroup.position.setTo(HB_X, HB_Y);
+
+    let healthBGBitmap = this._getHealthBarLayer('#000000', HB_WIDTH, HB_HEIGHT);
+    this.healthBG = this.sprite.game.add.sprite(0, 0, healthBGBitmap);
+    this.healthBarGroup.add(this.healthBG);
+
+    let healthFGBitmap = this._getHealthBarLayer('#ff0000', HB_WIDTH, HB_HEIGHT, 2);
+    this.healthFG = this.sprite.game.add.sprite(0, 0, healthFGBitmap);
+    this.healthBarGroup.add(this.healthFG);
+  }
+
+  _getHealthBarLayer(color : string, width : number, height : number, margin : number = 0){
+    let bitmapData : Phaser.BitmapData = this.sprite.game.add.bitmapData(width, height);
+    bitmapData.ctx.beginPath();
+    bitmapData.ctx.rect(margin, margin, width - (margin * 2), height - (margin * 2));
+    bitmapData.ctx.fillStyle = color;
+    bitmapData.ctx.fill();
+    return bitmapData;
+  }
+
   // interfaces method implementations
   applyDamage = (damage: number) => {
-    console.log('Hit for ' + damage + '!');
     this.currentHP -= damage;
+    this.healthFG.scale.setTo((this.currentHP / this.maxHP), 1);
   };
   isDead = () => {
     return this.currentHP <= 0;
   };
   destroy = () => {
     this.sprite.destroy();
+    this.healthBarGroup.destroy();
   };
   hit = () => {
     return this.startAnimation('hit', false);
@@ -91,10 +127,7 @@ export class Living implements ILiving, IAttacker, IAnimable {
 
     if(target != null)
       target.applyDamage(amount);
-    else
-      console.log("No target to hit.");
 
-    console.log(amount);
     return animation;
   };
   afterAttack = () => {
@@ -109,7 +142,6 @@ export class Living implements ILiving, IAttacker, IAnimable {
     let animation = this.animations[animationName];
     let directionAnimationName = (animation instanceof A.CustomAnimationGroup) ? `${animationName}_${this.direction}` : animationName;
     let frames = (animation instanceof A.CustomAnimationGroup) ? animation.getFramesCount(this.direction) : animation.getFramesCount();
-    console.log(`currentAnimationName = ${this.currentAnimationName}`);
     this.currentAnimationName = animationName;
     return this.sprite.animations.play(directionAnimationName, frames, loop);
   };
@@ -117,7 +149,6 @@ export class Living implements ILiving, IAttacker, IAnimable {
     let name = animationName ? animationName : this.currentAnimationName;
     let animation = this.animations[name];
     let directionAnimationName = (animation instanceof A.CustomAnimationGroup) ? `${name}_${this.direction}` : name;
-    console.log(`trying to stop ${directionAnimationName}`);
     this.sprite.animations.stop(directionAnimationName);
   };
   idle = () => {
