@@ -104,7 +104,13 @@ export class Living implements ILiving, IAttacker, IAnimable {
 
   // interfaces method implementations
   applyDamage = (damage: number) => {
-    this.currentHP -= damage;
+    if(this.currentHP - damage > 0){
+      this.currentHP -= damage;
+    } else {
+      this.currentHP = 0;
+      this.die();
+    }
+
     this.healthFG.scale.setTo((this.currentHP / this.maxHP), 1);
   };
   isDead = () => {

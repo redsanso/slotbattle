@@ -12,34 +12,34 @@ export class MenuState implements GameState {
     startButtonSrc : any;
     startButton : Phaser.Button;
 
-    /* Phaser lifecycle */
+    /* Phaser lifecycle */ 
 
-    preload = () => {
-        this.game.load.image('logo', './assets/logo.png');
+    public preload = () => {
+        this.game.load.image('logo', './assets/logo.png');        
         this.game.load.image('startButton', '/assets/png/StartButton.png');
-    };
+    }
 
-    create = () => {
+    public create = () => {
         this._createLogo();
-        this._createMenuButtons();
-    };
+        this._createMenuButtons(); 
+    }
+ 
+    public render = () => {
+       
+    }
 
-    render = () => {
-
-    };
-
-    shutdown = () => {
+    public shutdown = () => {
         let logoTween = this.game.add
             .tween(this.logo)
             .to({ alpha : 0, x : 10 }, 600, Phaser.Easing.Linear.None);
-
+        
         let startButtonTween = this.game.add
             .tween(this.startButton)
             .to({ alpha : 0, x : 10 }, 600, Phaser.Easing.Linear.None);
-
+        
         logoTween.start();
         startButtonTween.start();
-    };
+    }
 
     /* Utility methods */
 
@@ -47,7 +47,7 @@ export class MenuState implements GameState {
         this.logoSrc = this.game.cache.getImage('logo');
         this.logo = this.game.add.sprite(0, 0, 'logo');
         this.logo.position.x = this.game.world.width - (this.logoSrc.width * this.logo.scale.x);
-        this.logo.position.y = (this.game.world.height / 4) - ((this.logoSrc.height * this.logo.scale.y) / 2);
+        this.logo.position.y = (this.game.world.height * 1 / 4) - ((this.logoSrc.height * this.logo.scale.y) / 2);
     }
 
     private _createMenuButtons(){
@@ -58,6 +58,7 @@ export class MenuState implements GameState {
         this.startButton.onInputUp.add(this.onStartButtonClick);
     }
 
+    // external hooks
     public onStartButtonClick : () => void = () => {};
     public onOptionButtonClick : () => void = () => {};
 }

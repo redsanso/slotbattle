@@ -19,6 +19,7 @@ export class SlotsState implements GameState {
   slotScrollers: ListView[] = [];
   slotButton: Phaser.Button;
   backButton: Phaser.Button;
+  nextEnemyButton: Phaser.Button;
 
   tweensToComplete: number = 0;
 
@@ -31,12 +32,14 @@ export class SlotsState implements GameState {
   /* Lifecycle events */
 
   preload = () => {
+    this.game.load.bitmapFont
     this.game.load.image('slotbar', 'assets/png/Slotbar.png');
     // http://gaurav.munjal.us/Universal-LPC-Spritesheet-Character-Generator/
     this.game.load.spritesheet('player', 'assets/spritesheet/player.png', 64, 64);
     this.game.load.spritesheet('orc', 'assets/spritesheet/orc.png', 64, 64);
     this.game.load.image('attackButton', 'assets/png/AttackButton.png');
     this.game.load.image('backButton', 'assets/png/MainMenuButton.png');
+    this.game.load.image('nextEnemyButton', 'assets/png/NextEnemyButton.png');
     this.coinSprites = [];
     for (let i = 0; i < 7; i++) {
       this.coinSprites.push(this.game.load.image(`coin${i}`, `assets/png/coin${i}.png`));
@@ -69,13 +72,29 @@ export class SlotsState implements GameState {
     this.slotButton = null;
     this.backButton.destroy();
     this.backButton = null;
+    if(this.nextEnemyButton){
+      this.nextEnemyButton.destroy();
+      this.nextEnemyButton = null;
+    }
   };
 
   /* Utils */
 
   addBackButton() {
-    this.backButton = this.game.add.button(20, 20, 'backButton', () => {
+    this.backButton = this.game.add.button(20, 10, 'backButton', () => {
       this.onBackButtonClick();
+    });
+  }
+
+  addNextEnemyButton(){
+    let buttonSrc = this.game.cache.getImage('nextEnemyButton');
+    let buttonX = this.enemy.sprite.position.x - (buttonSrc.width / 2);
+    let buttonY = this.enemy.sprite.position.y - (this.enemy.sprite.height * 2 / 3) - (buttonSrc.height / 4);
+    this.nextEnemyButton = this.game.add.button(buttonX, buttonY, 'nextEnemyButton', () => {
+      this.nextEnemyButton.destroy();
+      this.nextEnemyButton = null;
+      this.enemy.destroy();
+      this.addEnemy();
     });
   }
 
@@ -169,7 +188,7 @@ export class SlotsState implements GameState {
   addSlotsButton() {
     let button = this.game.cache.getImage('attackButton');
     let buttonX = (this.slotsGroup.width - button.width) / 2;
-    let buttonY = this.slotsGroup.height - button.height + 40;
+    let buttonY = this.slotsGroup.height - button.height + 60;
     this.slotButton = this.game.add.button(buttonX, buttonY, 'attackButton', () => {
       this.runSlots();
     });
@@ -209,9 +228,27 @@ export class SlotsState implements GameState {
     }, 0);
 
     this.player.attack(damage, this.enemy).onComplete.addOnce(() => {
-      this.enemy.hit().onComplete.addOnce(() => {
-        this.enemy.idle();
-      });
+      if(this.enemy.isDead()){
+        this.enemy.die().onComplete.addOnce(() => {
+          this.addNextEnemyButton();
+        });
+      } else {
+        this.enemy.hit().onComplete.addOnce(() => {
+          let enemyDamage = Math.ceil(Math.random() * 20);
+          this.enemy.attack(enemyDamage, this.player).onComplete.addOnce(() => {
+            if(this.player.isDead()){
+              this.player.die().onComplete.addOnce(() => {
+                this.onBackButtonClick();
+              });
+            } else {
+              this.player.hit().onComplete.addOnce(() => {
+                this.player.idle();
+              });
+            }
+          });
+        });
+      }
+
       this.player.afterAttack().onComplete.addOnce(() => {
         this.player.idle();
       });
