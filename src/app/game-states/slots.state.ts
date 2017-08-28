@@ -4,7 +4,7 @@ import { GameState } from './game.state';
 import { CustomAnimationGroup, CustomAnimationFrames } from "../model/custom-animation";
 import { GROUND_LEVEL } from "./parallax.state";
 import * as _ from 'lodash';
-import { Human } from "../model/entities";
+import {Human, Orc, Living} from "../model/entities";
 
 export class SlotsState implements GameState {
   game: Phaser.Game;
@@ -23,7 +23,8 @@ export class SlotsState implements GameState {
   tweensToComplete: number = 0;
 
   //player : Phaser.Sprite;
-  player: Human;
+  player: Living;
+  enemy : Living;
 
   /* Lifecycle events */
 
@@ -31,6 +32,7 @@ export class SlotsState implements GameState {
     this.game.load.image('slotbar', 'assets/png/Slotbar.png');
     // http://gaurav.munjal.us/Universal-LPC-Spritesheet-Character-Generator/
     this.game.load.spritesheet('player', 'assets/spritesheet/player.png', 64, 64);
+    this.game.load.spritesheet('orc', 'assets/spritesheet/orc.png', 64, 64);
     this.game.load.image('attackButton', 'assets/png/AttackButton.png');
     this.game.load.image('backButton', 'assets/png/MainMenuButton.png');
     this.coinSprites = [];
@@ -43,6 +45,7 @@ export class SlotsState implements GameState {
     // cached
     this.addSlots();
     this.addPlayer();
+    this.addEnemy();
   };
 
   render = () => {
@@ -76,6 +79,12 @@ export class SlotsState implements GameState {
     let player = this.game.add.sprite(this.game.world.width, this.game.world.height, 'player');
     let scale = 2;
     this.player = new Human(10, player, 120, (player.game.world.height - (GROUND_LEVEL * scale)), scale);
+  }
+
+  addEnemy(){
+    let enemy = this.game.add.sprite(this.game.world.width, this.game.world.height, 'orc');
+    let scale = 2;
+    this.enemy = new Orc(10, enemy, this.game.world.width - (120 + 64 * scale), (enemy.game.world.height - (GROUND_LEVEL * scale)), scale);
   }
 
   addSlots() {

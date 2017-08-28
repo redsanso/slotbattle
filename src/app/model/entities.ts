@@ -30,75 +30,90 @@ export interface IAnimable extends IMobile {
     idle: () => void;
 }
 
-export class Human implements ILiving, IAttacker, IAnimable {
-    attackModifier: number = 1;
-    maxHP: number;
-    currentHP: number;
-    direction: direction = 'right';
-    animations: A.CustomAnimationSet;
-    sprite: Phaser.Sprite;
+export class Living implements ILiving, IAttacker, IAnimable {
+  attackModifier: number = 1;
+  maxHP: number;
+  currentHP: number;
+  direction: direction = 'right';
+  animations: A.CustomAnimationSet;
+  sprite: Phaser.Sprite;
 
+  constructor(maxHp: number, sprite: Phaser.Sprite, x : number, y : number, scale : number = 1) {
+    this.maxHP = maxHp;
+    this.currentHP = this.maxHP;
+    this.sprite = sprite;
+    this.animations = {
+      spellcast: new A.CustomAnimationGroup("spellcast", 0, 0, 7, sprite),
+      what: new A.CustomAnimationGroup("cmon", 4, 0, 8, sprite),
+      walk: new A.CustomAnimationGroup("walk", 8, 0, 9, sprite),
+      hail: new A.CustomAnimationGroup("hail", 12, 0, 6, sprite),
+      idle: new A.CustomAnimationGroup("idle", 12, 0, 2, sprite),
+      beforeAttack: new A.CustomAnimationGroup("beforeAttack", 16, 0, 9, sprite),
+      attack: new A.CustomAnimationGroup("attack", 16, 9, 2, sprite),
+      afterAttack: new A.CustomAnimationGroup("afterAttack", 16, 11, 1, sprite),
+      die: new A.CustomAnimationFrames("die", 20, 0, 6, sprite)
+    };
+
+    this.sprite.pivot.setTo(.5);
+    this.sprite.scale.setTo(scale);
+    this.sprite.position.setTo(x, y);
+
+    this.idle();
+  }
+
+  // interfaces method implementations
+  applyDamage = (damage: number) => {
+    this.currentHP -= damage;
+  };
+  isDead = () => {
+    return this.currentHP <= 0;
+  };
+  destroy = () => {
+    this.sprite.destroy();
+  };
+
+  beforeAttack = () => {
+    return this.startAnimation('beforeAttack', 9, false);
+  };
+  attack = (damage: number, target: ILiving) => {
+    let animation = this.startAnimation('attack', 9, false);
+    let amount = damage * this.attackModifier;
+
+    if(target != null)
+      target.applyDamage(amount);
+    else
+      console.log("No target to hit.");
+
+    console.log(amount);
+    return animation;
+  };
+  afterAttack = () => {
+    return this.startAnimation('afterAttack', 1, false);
+  };
+
+  changeDirection = (direction: direction) => {
+    this.direction = direction;
+  };
+  startAnimation = (animationName: string, speed: number, loop: boolean = true) => {
+    return this.sprite.animations.play(`${animationName}_${this.direction}`, speed, loop);
+  };
+  idle = () => {
+    this.startAnimation('idle', 4, true);
+  };
+}
+
+export class Human extends Living {
     constructor(maxHp: number, sprite: Phaser.Sprite, x : number, y : number, scale : number = 1) {
-        this.maxHP = maxHp;
-        this.currentHP = this.maxHP;
-        this.sprite = sprite;
-        this.animations = {
-            praise: new A.CustomAnimationGroup("praise", 0, 0, 7, sprite),
-            what: new A.CustomAnimationGroup("cmon", 4, 0, 8, sprite),
-            walk: new A.CustomAnimationGroup("walk", 8, 0, 9, sprite),
-            hail: new A.CustomAnimationGroup("hail", 12, 0, 6, sprite),
-            idle: new A.CustomAnimationGroup("idle", 12, 0, 2, sprite),
-            beforeAttack: new A.CustomAnimationGroup("beforeAttack", 16, 0, 9, sprite),
-            attack: new A.CustomAnimationGroup("attack", 16, 9, 2, sprite),
-            afterAttack: new A.CustomAnimationGroup("afterAttack", 16, 11, 1, sprite),
-            die: new A.CustomAnimationFrames("die", 20, 0, 6, sprite)
-        };
-        
-        this.sprite.pivot.setTo(.5);
-        this.sprite.scale.setTo(scale);
-        this.sprite.position.setTo(x, y);
-
-        this.idle();
+      super(maxHp, sprite, x, y, scale);
     }
+}
 
-    // interfaces method implementations
-    applyDamage = (damage: number) => {
-        this.currentHP -= damage;
-    };
-    isDead = () => {
-        return this.currentHP <= 0;
-    };
-    destroy = () => {
-        this.sprite.destroy();
-    };
-
-    beforeAttack = () => {
-        return this.startAnimation('beforeAttack', 9, false);
-    };
-    attack = (damage: number, target: ILiving) => {
-        let animation = this.startAnimation('attack', 9, false);
-        let amount = damage * this.attackModifier;
-
-        if(target != null)
-            target.applyDamage(amount);
-        else 
-            console.log("No target to hit.");
-
-        console.log(amount);
-        return animation;
-    };
-    afterAttack = () => {
-        return this.startAnimation('afterAttack', 1, false);
-    };
-
-    changeDirection = (direction: direction) => {
-        this.direction = direction;
-    };
-    startAnimation = (animationName: string, speed: number, loop: boolean = true) => {
-        return this.sprite.animations.play(`${animationName}_${this.direction}`, speed, loop);
-    };
-    idle = () => {
-        this.startAnimation('idle', 4, true);
-    };
-
+export class Orc extends Living {
+    constructor(maxHp: number, sprite: Phaser.Sprite, x : number, y : number, scale : number = 1) {
+      super(maxHp, sprite, x, y, scale);
+      this.direction = 'left';
+      // use spellcast animations for attack
+      this.animations.attack = new A.CustomAnimationGroup("attack", 0, 0, 7, sprite);
+      this.idle();
+    }
 }
