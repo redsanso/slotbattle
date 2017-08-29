@@ -21,6 +21,8 @@ export class SlotsState implements GameState {
   backButton: Phaser.Button;
   nextEnemyButton: Phaser.Button;
   lastEvent: string;
+  log: Phaser.Sprite;
+  logListView : ListView;
   lastEventMessage: Phaser.Text;
 
   tweensToComplete: number = 0;
@@ -51,9 +53,9 @@ export class SlotsState implements GameState {
   create = () => {
     // cached
     this.addSlots();
+    this.addLog();
     this.addPlayer();
     this.addEnemy();
-    this.addLastEventMessage();
   };
 
   render = () => {
@@ -107,17 +109,46 @@ export class SlotsState implements GameState {
     let player = this.game.add.sprite(this.game.world.width, this.game.world.height, 'player');
     let scale = 2;
     this.player = new Human(100, player, this.PLAYER_MARGIN_OFFSET, (player.game.world.height - GROUND_LEVEL), scale, 'idle');
+    this.addEventMessage('white', `An Human joined the match.`);
   }
 
   addEnemy() {
     let enemy = this.game.add.sprite(this.game.world.width, this.game.world.height, 'orc');
     let scale = 2;
     this.enemy = new Orc(100, enemy, this.game.world.width - this.PLAYER_MARGIN_OFFSET, (enemy.game.world.height - GROUND_LEVEL), scale, 'idle');
+    this.addEventMessage('white', `An Orc joined the match.`);
   }
 
-  addLastEventMessage() {
-    let lastEventMessageStyle = { font: '16px Arial Black' };
-    this.lastEventMessage = this.game.add.text((this.game.world.width / 2) + 20, 60, `Last event: \n${this.lastEvent || ""}`, lastEventMessageStyle);
+  addLog(){
+    let slotsSrc = this.game.cache.getImage('slotbar');
+    let coinSrc = this.game.cache.getImage('coin0');
+    let logX = this.game.world.width - (slotsSrc.width * 5) - 20;
+    let logY = 60;
+    let logW = slotsSrc.width * 5;
+    let logH = slotsSrc.height - coinSrc.height;
+    let logBitmap = this.game.add.bitmapData(logW, logH);
+    logBitmap.ctx.beginPath();
+    logBitmap.ctx.rect(0, 0, logW, logH);
+    logBitmap.ctx.fillStyle = '#000000';
+    logBitmap.ctx.globalAlpha = .5;
+    logBitmap.ctx.fill();
+    this.log = this.game.add.sprite(logX, logY, logBitmap);
+
+    let logListRectangle = new Phaser.Rectangle(this.log.position.x, this.log.position.y, this.log.width, this.log.height);
+    this.logListView = new ListView(this.game, this.game.world, logListRectangle, {
+      direction: 'y',
+      overflow: logH,
+      padding: 0,
+      autocull: false,
+      snapping: true
+    });
+  }
+
+  addEventMessage(fill : string, message : string) {
+    let lastEventMessageStyle = { font: '16px Arial Black', fill : fill, strokeThickness : 2, stroke : '#000000' };
+    this.lastEventMessage = this.game.add.text(0, 0, message, lastEventMessageStyle);
+    this.logListView.add(this.lastEventMessage);
+    this.logListView.scroller.tweenTo(1.4, -this.logListView.scroller.length);
   }
 
   addSlots() {
@@ -236,13 +267,13 @@ export class SlotsState implements GameState {
     }, 0);
 
     this.player.attack(damage, this.enemy).onComplete.addOnce(() => {
-      this.updateLastEventMessage(`Player hits enemy for ${damage * this.player.attackModifier} damage`, 'yellow');
+      this.addEventMessage('yellow', `Player hits enemy for ${damage * this.player.attackModifier} damage`);
       if (this.enemy.isDead()) {
         this.enemy.die().onComplete.addOnce(() => {
           let previousHP = this.player.currentHP;
           this.player.randomHeal();
           let updatedHP = this.player.currentHP;
-          this.updateLastEventMessage(`Player hits enemy for ${damage * this.player.attackModifier} damage. Enemy is dead!\nPlayer heals ${updatedHP - previousHP} HP!`, 'green');
+          this.addEventMessage('green', `Player hits enemy for ${damage * this.player.attackModifier} damage. Enemy is dead!\nPlayer heals ${updatedHP - previousHP} HP!`);
           this.addNextEnemyButton();
         });
       } else {
@@ -250,13 +281,13 @@ export class SlotsState implements GameState {
           let enemyDamage = Math.ceil(Math.random() * 20);
           this.enemy.attack(enemyDamage, this.player).onComplete.addOnce(() => {
             if (this.player.isDead()) {
-              this.updateLastEventMessage(`Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage. Player is dead :(`, 'red');
+              this.addEventMessage('red', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage. Player is dead :(`);
               this.player.die().onComplete.addOnce(() => {
                 this.onBackButtonClick();
               });
             } else {
               this.player.hit().onComplete.addOnce(() => {
-                this.updateLastEventMessage(`Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`, 'red');
+                this.addEventMessage('red', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
                 this.player.idle();
                 this.slotButton.enabled = true;
                 this.slotButton.visible = true;
@@ -270,12 +301,6 @@ export class SlotsState implements GameState {
         this.player.idle();
       });
     });
-  };
-
-  updateLastEventMessage = (message: string, fill : string) => {
-    this.lastEvent = message;
-    this.lastEventMessage.fill = fill;
-    this.lastEventMessage.text = `Last event: \n${this.lastEvent || ""}`;
   };
 
   // external hooks
