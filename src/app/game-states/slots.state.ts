@@ -77,6 +77,10 @@ export class SlotsState implements GameState {
     this.slotButton = null;
     this.backButton.destroy();
     this.backButton = null;
+    this.log.destroy();
+    this.log = null;
+    this.logListView.destroy();
+    this.logListView = null;
     if (this.nextEnemyButton) {
       this.nextEnemyButton.destroy();
       this.nextEnemyButton = null;
