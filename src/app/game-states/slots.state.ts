@@ -7,7 +7,7 @@ import * as _ from 'lodash';
 import { Human, Orc, Living } from "../model/entities";
 
 // glow filter initialization
-import * as Glow from './../filters/glow.filter';
+import {Glow} from './../filters/glow.filter';
 
 export class SlotsState implements GameState {
   game: Phaser.Game;
@@ -15,6 +15,7 @@ export class SlotsState implements GameState {
 
   coinHeight: number;
   coinSprites: Phaser.Image[] = [];
+  coinSounds: Phaser.Sound[] = [];
 
   slotCount: number = 5;
   slots: Phaser.Image[] = [];
@@ -39,18 +40,22 @@ export class SlotsState implements GameState {
   /* Lifecycle events */
 
   preload = () => {
-    this.game.load.bitmapFont
-    this.game.load.image('slotbar', 'assets/png/Slotbar.png');
     // http://gaurav.munjal.us/Universal-LPC-Spritesheet-Character-Generator/
     this.game.load.spritesheet('player', 'assets/spritesheet/player.png', 64, 64);
     this.game.load.spritesheet('orc', 'assets/spritesheet/orc.png', 64, 64);
+    this.game.load.spritesheet('explosion', 'assets/spritesheet/Explosion.png', 96, 96);
+
+    this.game.load.image('slotbar', 'assets/png/Slotbar.png');
     this.game.load.image('attackButton', 'assets/png/AttackButton.png');
     this.game.load.image('backButton', 'assets/png/MainMenuButton.png');
     this.game.load.image('nextEnemyButton', 'assets/png/NextEnemyButton.png');
     this.coinSprites = [];
     for (let i = 0; i < 7; i++) {
       this.coinSprites.push(this.game.load.image(`coin${i}`, `assets/png/coin${i}.png`));
+      this.coinSounds.push(this.game.load.audio(`coin${i + 1}`, `assets/sounds/coin${i + 1}.wav`));
     }
+
+    this.game.load.audio('orc_die', 'assets/sounds/orc_die.ogg');
   };
 
   create = () => {
@@ -116,7 +121,7 @@ export class SlotsState implements GameState {
     let player = this.game.add.sprite(this.game.world.width, this.game.world.height, 'player');
     let scale = 2;
     this.player = new Human(100, player, this.PLAYER_MARGIN_OFFSET, (player.game.world.height - GROUND_LEVEL), scale, 'idle');
-    this.addEventMessage('white', `An Human joined the match.`);
+    this.addEventMessage('white', `A Human joined the match.`);
   }
 
   addEnemy() {
@@ -152,7 +157,7 @@ export class SlotsState implements GameState {
   }
 
   addEventMessage(fill : string, message : string) {
-    let lastEventMessageStyle = { font: '16px Arial Black', fill : fill, strokeThickness : 2, stroke : '#000000' };
+    let lastEventMessageStyle = { font: '16px Courier', fill : fill, strokeThickness : 4, stroke : '#000000' };
     this.lastEventMessage = this.game.add.text(0, 0, message, lastEventMessageStyle);
     this.logListView.add(this.lastEventMessage);
     this.logListView.scroller.tweenTo(1.4, -this.logListView.scroller.length);
@@ -212,12 +217,15 @@ export class SlotsState implements GameState {
     }
 
     let onScrollComplete = () => {
-      let absPosition = Math.abs(listView.position) + this.coinHeight;
+      let absPosition = Math.abs(listView.position) + this.coinHeight; 
       let currentSprite = _.find(listView.items, (item) => {
         return (item.position.y <= absPosition) && (item.position.y > absPosition - this.coinHeight);
       });
-      currentSprite.filters = [ Glow ];
+      currentSprite.filters = [ new Glow(this.game) ];
       listView.slotValue += currentSprite.slotValue;
+      let audio = this.game.add.audio(`coin${currentSprite.slotValue}`);
+      audio.play();
+
       this.tweensToComplete--;
       this.slotButton.enabled = false;
 
@@ -250,6 +258,8 @@ export class SlotsState implements GameState {
       this.player.beforeAttack();
       this.slotButton.visible = false;
       this.slotScrollers.forEach((listView: ListView, index: number) => {
+        listView.items.forEach((item) => item.filters = null);
+
         listView.slotValue = 0;
 
         let target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
@@ -296,8 +306,9 @@ export class SlotsState implements GameState {
   performEnemyCounterattack(){
     this.enemy.hit().onComplete.addOnce(() => {
       let enemyDamage = Math.ceil(Math.random() * 20);
+      this.displayPlayerExplosion();
       this.enemy.attack(enemyDamage, this.player).onComplete.addOnce(() => {
-        this.addEventMessage('red', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
+        this.addEventMessage('darkred', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
         if (this.player.isDead()) {
           this.killPlayer();
         } else {
@@ -323,7 +334,7 @@ export class SlotsState implements GameState {
   }
 
   killPlayer(){
-    this.addEventMessage('red', `Player is dead :(`);
+    this.addEventMessage('darkred', `Player is dead :(`);
     this.player.die().onComplete.addOnce(() => {
       this.onBackButtonClick();
     });
@@ -333,6 +344,15 @@ export class SlotsState implements GameState {
     this.enemy.die().onComplete.addOnce(() => {
       this.addEventMessage('green', `Enemy is dead!\n`);
       this.addNextEnemyButton();
+    });
+  }
+
+  displayPlayerExplosion(){
+    let explosion = this.game.add.sprite(this.player.sprite.position.x, this.player.sprite.position.y, 'explosion');
+    explosion.anchor.setTo(.5);
+    explosion.animations.add('boom', _.range(0, 12));
+    explosion.animations.play('boom', 12, false).onComplete.add(() => {
+      explosion.destroy();
     });
   }
 
