@@ -4,7 +4,7 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 ## Run the demo
 * Clone repository
-* Install [`yarn`](`https://yarnpkg.com/lang/en/docs/install/`).
+* Install [`yarn`](https://yarnpkg.com/lang/en/docs/install/).
 * Run `yarn install`.
 * Run `yarn start`.
 
