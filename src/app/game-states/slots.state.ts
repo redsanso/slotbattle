@@ -219,7 +219,7 @@ export class SlotsState implements GameState {
       this.slotButton.enabled = false;
 
       if (this.tweensToComplete == 0) {
-        this.performAttack();
+        this.performPlayerAttack();
       }
     };
 
@@ -265,40 +265,22 @@ export class SlotsState implements GameState {
     }
   }
 
-  performAttack = () => {
-    let damage = this.slotScrollers.reduce((accumulator: number, scroller: ListView) => {
+  getTotalSlotPoints(){
+    return this.slotScrollers.reduce((accumulator: number, scroller: ListView) => {
       return accumulator + scroller.slotValue;
     }, 0);
+  }
+
+  performPlayerAttack = () => {
+    let damage = this.getTotalSlotPoints();
 
     this.player.attack(damage, this.enemy).onComplete.addOnce(() => {
       this.addEventMessage('yellow', `Player hits enemy for ${damage * this.player.attackModifier} damage`);
       if (this.enemy.isDead()) {
-        this.enemy.die().onComplete.addOnce(() => {
-          let previousHP = this.player.currentHP;
-          this.player.randomHeal();
-          let updatedHP = this.player.currentHP;
-          this.addEventMessage('green', `Player hits enemy for ${damage * this.player.attackModifier} damage. Enemy is dead!\nPlayer heals ${updatedHP - previousHP} HP!`);
-          this.addNextEnemyButton();
-        });
+        this.randomHealPlayer();
+        this.killEnemy();
       } else {
-        this.enemy.hit().onComplete.addOnce(() => {
-          let enemyDamage = Math.ceil(Math.random() * 20);
-          this.enemy.attack(enemyDamage, this.player).onComplete.addOnce(() => {
-            if (this.player.isDead()) {
-              this.addEventMessage('red', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage. Player is dead :(`);
-              this.player.die().onComplete.addOnce(() => {
-                this.onBackButtonClick();
-              });
-            } else {
-              this.player.hit().onComplete.addOnce(() => {
-                this.addEventMessage('red', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
-                this.player.idle();
-                this.slotButton.enabled = true;
-                this.slotButton.visible = true;
-              });
-            }
-          });
-        });
+        this.performEnemyCounterattack();
       }
 
       this.player.afterAttack().onComplete.addOnce(() => {
@@ -306,6 +288,50 @@ export class SlotsState implements GameState {
       });
     });
   };
+
+  performEnemyCounterattack(){
+    this.enemy.hit().onComplete.addOnce(() => {
+      let enemyDamage = Math.ceil(Math.random() * 20);
+      this.enemy.attack(enemyDamage, this.player).onComplete.addOnce(() => {
+        this.addEventMessage('red', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
+        if (this.player.isDead()) {
+          this.killPlayer();
+        } else {
+          this.hitPlayer(enemyDamage);
+        }
+      });
+    });
+  }
+
+  randomHealPlayer(){
+    let previousHP = this.player.currentHP;
+    this.player.randomHeal();
+    let updatedHP = this.player.currentHP;
+    this.addEventMessage('green', `Player heals ${updatedHP - previousHP} HP!`);
+  }
+
+  hitPlayer(enemyDamage : number){
+    this.player.hit().onComplete.addOnce(() => {
+      this.addEventMessage('red', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
+      this.player.idle();
+      this.slotButton.enabled = true;
+      this.slotButton.visible = true;
+    });
+  }
+
+  killPlayer(){
+    this.addEventMessage('red', `Player is dead :(`);
+    this.player.die().onComplete.addOnce(() => {
+      this.onBackButtonClick();
+    });
+  }
+
+  killEnemy(){
+    this.enemy.die().onComplete.addOnce(() => {
+      this.addEventMessage('green', `Enemy is dead!\n`);
+      this.addNextEnemyButton();
+    });
+  }
 
   // external hooks
   public onBackButtonClick: () => void = () => { };
