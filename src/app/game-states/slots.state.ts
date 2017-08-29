@@ -312,7 +312,6 @@ export class SlotsState implements GameState {
 
   hitPlayer(enemyDamage : number){
     this.player.hit().onComplete.addOnce(() => {
-      this.addEventMessage('red', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
       this.player.idle();
       this.slotButton.enabled = true;
       this.slotButton.visible = true;
