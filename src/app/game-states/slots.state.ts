@@ -6,6 +6,9 @@ import { GROUND_LEVEL } from "./parallax.state";
 import * as _ from 'lodash';
 import { Human, Orc, Living } from "../model/entities";
 
+// glow filter initialization
+import * as Glow from './../filters/glow.filter';
+
 export class SlotsState implements GameState {
   game: Phaser.Game;
   key: string = "slots";
@@ -213,8 +216,8 @@ export class SlotsState implements GameState {
       let currentSprite = _.find(listView.items, (item) => {
         return (item.position.y <= absPosition) && (item.position.y > absPosition - this.coinHeight);
       });
+      currentSprite.filters = [ Glow ];
       listView.slotValue += currentSprite.slotValue;
-      //console.log(`Slot ${listView.id} has value ${currentSprite.slotValue}`);
       this.tweensToComplete--;
       this.slotButton.enabled = false;
 
@@ -248,6 +251,7 @@ export class SlotsState implements GameState {
       this.slotButton.visible = false;
       this.slotScrollers.forEach((listView: ListView, index: number) => {
         listView.slotValue = 0;
+
         let target = Math.floor(Math.random() * (listView.length - listView.slotsHeight));
         target = listView.position;
         while (Math.abs(target - listView.position) < this.coinHeight * 6) {
