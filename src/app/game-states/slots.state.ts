@@ -37,6 +37,10 @@ export class SlotsState implements GameState {
 
   PLAYER_MARGIN_OFFSET: number = 120;
 
+  arrowShootSound: Phaser.Sound;
+  arrowHitSound: Phaser.Sound;
+  explosionSound: Phaser.Sound;
+
   /* Lifecycle events */
 
   preload = () => {
@@ -55,11 +59,14 @@ export class SlotsState implements GameState {
       this.coinSounds.push(this.game.load.audio(`coin${i + 1}`, `assets/sounds/coin${i + 1}.wav`));
     }
 
-    this.game.load.audio('orc_die', 'assets/sounds/orc_die.ogg');
+    this.game.load.audio('arrow_hit', 'assets/sounds/arrow_hit.mp3');
+    this.game.load.audio('arrow_shoot', 'assets/sounds/arrow_shoot.mp3');
+    this.game.load.audio('explosion', 'assets/sounds/explosion.mp3');
   };
 
   create = () => {
     // cached
+    this.addSounds();
     this.addSlots();
     this.addLog();
     this.addPlayer();
@@ -96,6 +103,12 @@ export class SlotsState implements GameState {
   };
 
   /* Utils */
+
+  addSounds(){
+    this.arrowShootSound = this.game.add.audio('arrow_shoot');
+    this.arrowHitSound = this.game.add.audio('arrow_hit');
+    this.explosionSound = this.game.add.audio('explosion');
+  }
 
   addBackButton() {
     this.backButton = this.game.add.button(20, 10, 'backButton', () => {
@@ -217,7 +230,7 @@ export class SlotsState implements GameState {
     }
 
     let onScrollComplete = () => {
-      let absPosition = Math.abs(listView.position) + this.coinHeight; 
+      let absPosition = Math.abs(listView.position) + this.coinHeight;
       let currentSprite = _.find(listView.items, (item) => {
         return (item.position.y <= absPosition) && (item.position.y > absPosition - this.coinHeight);
       });
@@ -287,14 +300,14 @@ export class SlotsState implements GameState {
 
   performPlayerAttack = () => {
     let damage = this.getTotalSlotPoints();
-
+    this.arrowShootSound.play();
     this.player.attack(damage, this.enemy).onComplete.addOnce(() => {
       this.addEventMessage('yellow', `Player hits enemy for ${damage * this.player.attackModifier} damage`);
       if (this.enemy.isDead()) {
         this.randomHealPlayer();
         this.killEnemy();
       } else {
-        this.performEnemyCounterattack();
+        this.hitEnemy();
       }
 
       this.player.afterAttack().onComplete.addOnce(() => {
@@ -304,17 +317,15 @@ export class SlotsState implements GameState {
   };
 
   performEnemyCounterattack(){
-    this.enemy.hit().onComplete.addOnce(() => {
-      let enemyDamage = Math.ceil(Math.random() * 20);
-      this.displayPlayerExplosion();
-      this.enemy.attack(enemyDamage, this.player).onComplete.addOnce(() => {
-        this.addEventMessage('darkred', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
-        if (this.player.isDead()) {
-          this.killPlayer();
-        } else {
-          this.hitPlayer(enemyDamage);
-        }
-      });
+    let enemyDamage = Math.ceil(Math.random() * 20);
+    this.displayPlayerExplosion();
+    this.enemy.attack(enemyDamage, this.player).onComplete.addOnce(() => {
+      this.addEventMessage('darkred', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
+      if (this.player.isDead()) {
+        this.killPlayer();
+      } else {
+        this.hitPlayer();
+      }
     });
   }
 
@@ -325,11 +336,18 @@ export class SlotsState implements GameState {
     this.addEventMessage('green', `Player heals ${updatedHP - previousHP} HP!`);
   }
 
-  hitPlayer(enemyDamage : number){
+  hitPlayer(){
     this.player.hit().onComplete.addOnce(() => {
       this.player.idle();
       this.slotButton.enabled = true;
       this.slotButton.visible = true;
+    });
+  }
+
+  hitEnemy(){
+    this.arrowHitSound.play();
+    this.enemy.hit().onComplete.addOnce(() => {
+      this.performEnemyCounterattack();
     });
   }
 
@@ -354,6 +372,7 @@ export class SlotsState implements GameState {
     explosion.animations.play('boom', 12, false).onComplete.add(() => {
       explosion.destroy();
     });
+    this.explosionSound.play();
   }
 
   // external hooks
