@@ -1,5 +1,6 @@
 import * as Phaser from 'phaser';
 import * as A from './custom-animation';
+import * as _ from 'lodash';
 
 export interface ILiving {
   maxHP: number;
@@ -56,9 +57,12 @@ export class Living implements ILiving, IAttacker, IAnimable {
     this.maxHP = maxHp;
     this.currentHP = this.maxHP;
     this.sprite = game.add.sprite(x, y, spriteName);
+    
+    let heal : Phaser.Sound = this.sprite.game.add.audio('heal');
 
     this.animations = {
       spellcast: new A.CustomAnimationGroup("spellcast", 0, 0, 7, this.sprite),
+      heal: new A.CustomAnimationGroup("heal", 0, 0, 7, this.sprite, false, heal),
       what: new A.CustomAnimationGroup("cmon", 4, 0, 8, this.sprite),
       walk: new A.CustomAnimationGroup("walk", 8, 0, 9, this.sprite),
       hail: new A.CustomAnimationGroup("hail", 12, 0, 6, this.sprite),
@@ -182,7 +186,7 @@ export class Living implements ILiving, IAttacker, IAnimable {
       this.currentHP += amount;
     }
 
-    this.startAnimation('spellcast', false);
+    this.startAnimation('heal', false);
     this._updateHealthBar();
   };
   randomHeal = () => {
@@ -220,6 +224,7 @@ export class Living implements ILiving, IAttacker, IAnimable {
 export class Human extends Living {
   static preload = (game : Phaser.Game) => {
     game.load.spritesheet('player', 'assets/spritesheet/player.png', 64, 64);
+    game.load.audio('heal', 'assets/sounds/shimmer_1.flac');
     game.load.audio('explosion', 'assets/sounds/explosion.mp3');
     game.load.audio('arrow_shoot', 'assets/sounds/arrow_shoot.mp3');
   };
@@ -228,7 +233,7 @@ export class Human extends Living {
     super(game, maxHp, 'player', x, y, scale, startAnimationName);
     let explosion : Phaser.Sound = this.sprite.game.add.audio('explosion');
     let arrowShoot : Phaser.Sound = this.sprite.game.add.audio('arrow_shoot');
-    this.animations.attack = new A.CustomAnimationGroup("attack", 16, 9, 2, this.sprite, arrowShoot);
+    this.animations.attack = new A.CustomAnimationGroup("attack", 16, 9, 2, this.sprite, false, arrowShoot);
     this.animations.hit = new A.CustomAnimationFrames("hit", 20, 0, 4, this.sprite, true, explosion);
     this.changeDirection('right', true);
   }
@@ -237,6 +242,7 @@ export class Human extends Living {
 export class Orc extends Living {
   static preload = (game : Phaser.Game) => {
     game.load.spritesheet('orc', 'assets/spritesheet/orc.png', 64, 64);
+    game.load.spritesheet('boom', 'assets/spritesheet/Explosion.png', 96, 96);
     game.load.audio('arrow_hit', 'assets/sounds/arrow_hit.mp3');
   };
 
@@ -248,4 +254,19 @@ export class Orc extends Living {
     this.animations.hit = new A.CustomAnimationFrames("hit", 20, 0, 4, this.sprite, true, arrowHit);
     this.changeDirection('left', true);
   }
+
+  explosionAttack = (damage : number, target : Living) => {
+    let attack = this.attack(damage, target);
+    attack.onComplete.addOnce(() => {
+      let boom = this.sprite.game.add.sprite(target.sprite.position.x, target.sprite.position.y, 'boom');
+      boom.anchor.setTo(.5);
+      boom.animations.add('boom', _.range(0, 12));
+      let boomAnimation = boom.animations.getAnimation('boom');
+      boomAnimation.onComplete.addOnce(() => {
+        boom.destroy();
+      });
+      boomAnimation.play();
+    });
+    return attack;
+  };
 }

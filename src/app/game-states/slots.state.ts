@@ -300,8 +300,7 @@ export class SlotsState implements GameState {
 
   performEnemyCounterattack(){
     let enemyDamage = Math.ceil(Math.random() * 20);
-    this.displayPlayerExplosion();
-    this.enemy.attack(enemyDamage, this.player).onComplete.addOnce(() => {
+    this.enemy.explosionAttack(enemyDamage, this.player).onComplete.addOnce(() => {
       this.addEventMessage('darkred', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
       if (this.player.isDead()) {
         this.killPlayer();
@@ -343,15 +342,6 @@ export class SlotsState implements GameState {
     this.enemy.die().onComplete.addOnce(() => {
       this.addEventMessage('green', `Enemy is dead!\n`);
       this.addNextEnemyButton();
-    });
-  }
-
-  displayPlayerExplosion(){
-    let explosion = this.game.add.sprite(this.player.sprite.position.x, this.player.sprite.position.y, 'explosion');
-    explosion.anchor.setTo(.5);
-    explosion.animations.add('boom', _.range(0, 12));
-    explosion.animations.play('boom', 12, false).onComplete.add(() => {
-      explosion.destroy();
     });
   }
 
