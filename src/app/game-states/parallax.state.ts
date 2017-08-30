@@ -83,7 +83,7 @@ export class ParallaxState implements GameState {
 
     create() {
         this.music = this.game.add.audio('music');
-        this.music.play(null, 0, 3, true);
+        this.music.play(null, 0, 1, true);
 
         this.addLayer('parallax-0', 0, 0);
         this.addLayer('parallax-1', 1, -.4);

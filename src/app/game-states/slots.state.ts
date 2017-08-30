@@ -237,7 +237,7 @@ export class SlotsState implements GameState {
       currentSprite.filters = [ new Glow(this.game) ];
       listView.slotValue += currentSprite.slotValue;
       let audio = this.game.add.audio(`coin${currentSprite.slotValue}`);
-      audio.play();
+      audio.play(null, 0, .2, false);
 
       this.tweensToComplete--;
       this.slotButton.enabled = false;
