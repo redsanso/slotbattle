@@ -53,10 +53,13 @@ export class Living implements ILiving, IAttacker, IAnimable {
   static create : (game : Phaser.Game) => void;
   static render : (game : Phaser.Game) => void;
 
+  destroyables : any[] = [];
+
   constructor(game : Phaser.Game, maxHp: number, spriteName: string, x : number, y : number, scale : number = 1, startAnimationName : string = 'idle') {
     this.maxHP = maxHp;
     this.currentHP = this.maxHP;
     this.sprite = game.add.sprite(x, y, spriteName);
+    this.destroyables = [this.sprite];
     
     let heal : Phaser.Sound = this.sprite.game.add.audio('heal');
 
@@ -101,6 +104,8 @@ export class Living implements ILiving, IAttacker, IAnimable {
     let healthFGBitmap = this._getHealthBarLayer('#ff0000', HB_WIDTH, HB_HEIGHT, 2);
     this.healthFG = this.sprite.game.add.sprite(0, 0, healthFGBitmap);
     this.healthBarGroup.add(this.healthFG);
+
+    this.destroyables.push(this.healthBarGroup);
   }
 
   _getHealthBarLayer(color : string, width : number, height : number, margin : number = 0){
@@ -155,8 +160,11 @@ export class Living implements ILiving, IAttacker, IAnimable {
     return this.currentHP <= 0;
   };
   destroy = () => {
-    this.sprite.destroy();
-    this.healthBarGroup.destroy();
+    this.destroyables.forEach((destroyable : any) => {
+      if(destroyable){
+        destroyable.destroy();
+      }
+    })
   };
   hit = () => {
     return this.startAnimation('hit', false);
@@ -300,6 +308,8 @@ export class Human extends Living implements ILevelable {
     let expFGBitmap = this._getEXPBarLayer('#8a2be2', XB_WIDTH, XB_HEIGHT, 2);
     this.expFG = this.sprite.game.add.sprite(0, 0, expFGBitmap);
     this.expBarGroup.add(this.expFG);
+
+    this.destroyables.push(this.expBarGroup);
   }
   _getEXPBarLayer(color : string, width : number, height : number, margin : number = 0){
     let bitmapData : Phaser.BitmapData = this.sprite.game.add.bitmapData(width, height);
