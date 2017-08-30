@@ -232,6 +232,9 @@ export class SlotsState implements GameState {
 
     listView.scroller.events.onComplete.add(onScrollComplete);
 
+    /* Slot can now be triggered only by clicking on Attack button */
+    listView.scroller.clickObject.inputEnabled = false;
+
     this.slotScrollers.push(listView);
   }
 
@@ -281,10 +284,22 @@ export class SlotsState implements GameState {
     }, 0);
   }
 
+  /* If [coinValue] occurs more than 2 times, a bonus of Math.pow(coinValue, count) is added to total slot damage */
+  getBonusPoints(){
+    let groups = _.countBy(this.slotScrollers, 'slotValue');    
+    return _.sumBy(Object.keys(groups), (slotValueKey : string) => {
+      if(groups[slotValueKey] <= 2)
+        return 0;
+
+      return Math.pow(parseInt(slotValueKey), groups[slotValueKey]);
+    });
+  }
+
   performPlayerAttack = () => {
     let damage = this.getTotalSlotPoints();
-    this.player.attack(damage, this.enemy).onComplete.addOnce(() => {
-      this.addEventMessage('yellow', `Player hits enemy for ${damage * this.player.attackModifier} damage`);
+    let bonus = this.getBonusPoints();
+    this.player.attack(damage + bonus, this.enemy).onComplete.addOnce(() => {
+      this.addEventMessage('yellow', `Player hits enemy for ${damage * this.player.attackModifier} damage + ${bonus} bonus!`);
       if (this.enemy.isDead()) {
         this.randomHealPlayer();
         this.killEnemy();
@@ -334,7 +349,8 @@ export class SlotsState implements GameState {
   killPlayer(){
     this.addEventMessage('darkred', `Player is dead :(`);
     this.player.die().onComplete.addOnce(() => {
-      this.onBackButtonClick();
+      this.slotButton.enabled = false;
+      this.slotButton.visible = false;
     });
   }
 
