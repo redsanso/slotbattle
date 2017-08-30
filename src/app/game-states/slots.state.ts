@@ -118,6 +118,8 @@ export class SlotsState implements GameState {
   addPlayer() {
     let scale = 2;
     this.player = new Human(this.game, 100, this.PLAYER_MARGIN_OFFSET, (this.game.world.height - GROUND_LEVEL), scale, 'idle');
+    this.player.onGainEXP = (amount : number) => this.addEventMessage('darkslateblue', `Player is rewarded with ${amount} exp points.`);
+    this.player.onLevelUp = () => this.addEventMessage('slateblue', `Player reaches level ${this.player.level}!\nAny damage is now multiplied by ${this.player.attackModifier}!`);
     this.addEventMessage('white', `A Human joined the match.`);
   }
 
@@ -298,8 +300,8 @@ export class SlotsState implements GameState {
   performPlayerAttack = () => {
     let damage = this.getTotalSlotPoints();
     let bonus = this.getBonusPoints();
-    this.player.attack(damage + bonus, this.enemy).onComplete.addOnce(() => {
-      this.addEventMessage('yellow', `Player hits enemy for ${damage * this.player.attackModifier} damage + ${bonus} bonus!`);
+    this.player.attack(damage, this.enemy, bonus).onComplete.addOnce(() => {
+      this.addEventMessage('yellow', `Player hits enemy for ${Math.ceil(damage * this.player.attackModifier)} damage + ${bonus} bonus!`);
       if (this.enemy.isDead()) {
         this.randomHealPlayer();
         this.killEnemy();
@@ -316,7 +318,7 @@ export class SlotsState implements GameState {
   performEnemyCounterattack(){
     let enemyDamage = Math.ceil(Math.random() * 20);
     this.enemy.explosionAttack(enemyDamage, this.player).onComplete.addOnce(() => {
-      this.addEventMessage('darkred', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
+      this.addEventMessage('firebrick', `Enemy hits player for ${Math.ceil(enemyDamage * this.player.attackModifier)} damage.`);
       if (this.player.isDead()) {
         this.killPlayer();
       } else {
@@ -347,7 +349,7 @@ export class SlotsState implements GameState {
   }
 
   killPlayer(){
-    this.addEventMessage('darkred', `Player is dead :(`);
+    this.addEventMessage('firebrick', `Player is dead :(`);
     this.player.die().onComplete.addOnce(() => {
       this.slotButton.enabled = false;
       this.slotButton.visible = false;
@@ -357,8 +359,14 @@ export class SlotsState implements GameState {
   killEnemy(){
     this.enemy.die().onComplete.addOnce(() => {
       this.addEventMessage('green', `Enemy is dead!\n`);
+      this.rewardEXP();
       this.addNextEnemyButton();
     });
+  }
+
+  rewardEXP(){
+    let exp = Math.ceil(Math.random() * 10 * this.player.level);
+    this.player.gainEXP(exp);
   }
 
   // external hooks

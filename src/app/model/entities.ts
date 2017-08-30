@@ -165,9 +165,9 @@ export class Living implements ILiving, IAttacker, IAnimable {
   beforeAttack = () => {
     return this.startAnimation('beforeAttack', false);
   };
-  attack = (damage: number, target: ILiving) => {
+  attack = (damage: number, target: ILiving, bonus : number = 0) => {
     let animation = this.startAnimation('attack', false);
-    let amount = damage * this.attackModifier;
+    let amount = Math.ceil(damage * this.attackModifier) + bonus;
 
     if(target != null)
       target.applyDamage(amount);
@@ -221,13 +221,31 @@ export class Living implements ILiving, IAttacker, IAnimable {
   };
 }
 
-export class Human extends Living {
+export interface ILevelable {
+  level : number;
+  currentEXP : number;
+  nextLevelEXP : number;
+  gainEXP : (amount : number) => void;
+  levelUp : () => void;
+  onGainEXP : (amount : number) => void;
+  onLevelUp : () => void;
+}
+
+export class Human extends Living implements ILevelable {
   static preload = (game : Phaser.Game) => {
     game.load.spritesheet('player', 'assets/spritesheet/player.png', 64, 64);
     game.load.audio('heal', 'assets/sounds/shimmer_1.flac');
     game.load.audio('explosion', 'assets/sounds/explosion.mp3');
     game.load.audio('arrow_shoot', 'assets/sounds/arrow_shoot.mp3');
   };
+
+  level : number;
+  currentEXP : number;
+  nextLevelEXP : number;
+
+  expBarGroup : Phaser.Group;
+  expBG : Phaser.Sprite;
+  expFG : Phaser.Sprite;
 
   constructor(game : Phaser.Game, maxHp: number, x : number, y : number, scale : number = 1, startAnimationName : string = 'idle') {
     super(game, maxHp, 'player', x, y, scale, startAnimationName);
@@ -236,6 +254,66 @@ export class Human extends Living {
     this.animations.attack = new A.CustomAnimationGroup("attack", 16, 9, 2, this.sprite, false, arrowShoot);
     this.animations.hit = new A.CustomAnimationFrames("hit", 20, 0, 4, this.sprite, true, explosion);
     this.changeDirection('right', true);
+
+    this.level = 1;
+    this.currentEXP = 0;
+    this.nextLevelEXP = 10;
+
+    this._createEXPBar();
+    this._updateEXPBar();
+  }
+
+  onGainEXP : (amount : number) => void = () => {};
+  onLevelUp : () => void = () => {};
+
+  gainEXP = (amount : number) => {
+    this.onGainEXP(amount);
+    if(this.currentEXP + amount >= this.nextLevelEXP) {
+      let diff = Math.abs(this.currentEXP - this.nextLevelEXP);
+      this.nextLevelEXP = Math.ceil(Math.pow(this.nextLevelEXP, 1.2));
+      this.currentEXP = diff;
+      this.levelUp();
+    } else {
+      this.currentEXP += amount;
+    }
+
+    this._updateEXPBar();
+  };
+  levelUp = () => {
+    this.level++;
+    this.attackModifier += .2 * this.level;
+    this.onLevelUp();
+  };
+
+  _createEXPBar(){
+    this.expBarGroup = this.sprite.game.add.group();
+    let XB_WIDTH = 128;
+    let XB_HEIGHT = 8;
+    let XB_X = this.sprite.position.x - (XB_WIDTH / 2);
+    let XB_Y = this.sprite.position.y - (this.sprite.height * 2 / 3) + 20;
+    this.expBarGroup.position.setTo(XB_X, XB_Y);
+
+    let expBGBitmap = this._getEXPBarLayer('#000000', XB_WIDTH, XB_HEIGHT);
+    this.expBG = this.sprite.game.add.sprite(0, 0, expBGBitmap);
+    this.expBarGroup.add(this.expBG);
+
+    let expFGBitmap = this._getEXPBarLayer('#8a2be2', XB_WIDTH, XB_HEIGHT, 2);
+    this.expFG = this.sprite.game.add.sprite(0, 0, expFGBitmap);
+    this.expBarGroup.add(this.expFG);
+  }
+  _getEXPBarLayer(color : string, width : number, height : number, margin : number = 0){
+    let bitmapData : Phaser.BitmapData = this.sprite.game.add.bitmapData(width, height);
+    bitmapData.ctx.beginPath();
+    bitmapData.ctx.rect(margin, margin, width - (margin * 2), height - (margin * 2));
+    bitmapData.ctx.fillStyle = color;
+    bitmapData.ctx.fill();
+    return bitmapData;
+  }
+  _updateEXPBar(){
+    let maxFGWidth = this.expBG.width - 4;
+    let expFGWIDTH = (this.currentEXP / this.nextLevelEXP) * maxFGWidth;
+    console.log(`bar width = ${expFGWIDTH} on ${maxFGWidth}`);
+    this.expFG.width = expFGWIDTH;
   }
 }
 
