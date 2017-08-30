@@ -12,8 +12,9 @@ export class CustomAnimationFrames implements ICustomAnimationFrames {
   rowIndex : number;
   colIndex : number;
   frames   : number[];
+  sound    : Phaser.Sound;
 
-  constructor(name : string, rowIndex : number, colIndex : number, frameCount : number, player : Phaser.Sprite, bounce : boolean = false){
+  constructor(name : string, rowIndex : number, colIndex : number, frameCount : number, player : Phaser.Sprite, bounce : boolean = false, sound ?: Phaser.Sound){
     this.name = name;
     this.rowIndex = rowIndex;
     this.colIndex = colIndex;
@@ -23,6 +24,13 @@ export class CustomAnimationFrames implements ICustomAnimationFrames {
       this.frames.concat(_.rangeRight(startIndex, startIndex + frameCount));
     }
     player.animations.add(this.name, this.frames);
+
+    if(sound){
+      this.sound = sound;
+      player.animations.getAnimation(this.name).onStart.add(() => {
+        this.sound.play();
+      });
+    }
   }
 
   getFramesCount(){
@@ -36,11 +44,11 @@ export class CustomAnimationGroup {
   down : CustomAnimationFrames;
   right : CustomAnimationFrames;
 
-  constructor(name : string, rowIndex : number, colIndex : number, frameCount : number, player : Phaser.Sprite){
-    this.up = new CustomAnimationFrames(`${name}_up`, rowIndex, colIndex, frameCount, player);
-    this.left = new CustomAnimationFrames(`${name}_left`, rowIndex + 1, colIndex, frameCount, player);
-    this.down = new CustomAnimationFrames(`${name}_down`, rowIndex + 2, colIndex, frameCount, player);
-    this.right = new CustomAnimationFrames(`${name}_right`, rowIndex + 3, colIndex, frameCount, player);
+  constructor(name : string, rowIndex : number, colIndex : number, frameCount : number, player : Phaser.Sprite, sound ?: Phaser.Sound){
+    this.up = new CustomAnimationFrames(`${name}_up`, rowIndex, colIndex, frameCount, player, sound);
+    this.left = new CustomAnimationFrames(`${name}_left`, rowIndex + 1, colIndex, frameCount, player, sound);
+    this.down = new CustomAnimationFrames(`${name}_down`, rowIndex + 2, colIndex, frameCount, player, sound);
+    this.right = new CustomAnimationFrames(`${name}_right`, rowIndex + 3, colIndex, frameCount, player, sound);
   }
 
   getFramesCount(direction : string){

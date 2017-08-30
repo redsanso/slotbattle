@@ -48,21 +48,26 @@ export class Living implements ILiving, IAttacker, IAnimable {
   healthBG : Phaser.Sprite;
   healthFG : Phaser.Sprite;
 
-  constructor(maxHp: number, sprite: Phaser.Sprite, x : number, y : number, scale : number = 1, startAnimationName : string = 'idle') {
+  static preload : (game : Phaser.Game) => void;
+  static create : (game : Phaser.Game) => void;
+  static render : (game : Phaser.Game) => void;
+
+  constructor(game : Phaser.Game, maxHp: number, spriteName: string, x : number, y : number, scale : number = 1, startAnimationName : string = 'idle') {
     this.maxHP = maxHp;
     this.currentHP = this.maxHP;
-    this.sprite = sprite;
+    this.sprite = game.add.sprite(x, y, spriteName);
+
     this.animations = {
-      spellcast: new A.CustomAnimationGroup("spellcast", 0, 0, 7, sprite),
-      what: new A.CustomAnimationGroup("cmon", 4, 0, 8, sprite),
-      walk: new A.CustomAnimationGroup("walk", 8, 0, 9, sprite),
-      hail: new A.CustomAnimationGroup("hail", 12, 0, 6, sprite),
-      idle: new A.CustomAnimationGroup("idle", 12, 0, 2, sprite),
-      beforeAttack: new A.CustomAnimationGroup("beforeAttack", 16, 0, 9, sprite),
-      attack: new A.CustomAnimationGroup("attack", 16, 9, 2, sprite),
-      afterAttack: new A.CustomAnimationGroup("afterAttack", 16, 11, 1, sprite),
-      die: new A.CustomAnimationFrames("die", 20, 0, 6, sprite),
-      hit: new A.CustomAnimationFrames("hit", 20, 0, 4, sprite, true)
+      spellcast: new A.CustomAnimationGroup("spellcast", 0, 0, 7, this.sprite),
+      what: new A.CustomAnimationGroup("cmon", 4, 0, 8, this.sprite),
+      walk: new A.CustomAnimationGroup("walk", 8, 0, 9, this.sprite),
+      hail: new A.CustomAnimationGroup("hail", 12, 0, 6, this.sprite),
+      idle: new A.CustomAnimationGroup("idle", 12, 0, 2, this.sprite),
+      beforeAttack: new A.CustomAnimationGroup("beforeAttack", 16, 0, 9, this.sprite),
+      attack: new A.CustomAnimationGroup("attack", 16, 9, 2, this.sprite),
+      afterAttack: new A.CustomAnimationGroup("afterAttack", 16, 11, 1, this.sprite),
+      die: new A.CustomAnimationFrames("die", 20, 0, 6, this.sprite),
+      hit: new A.CustomAnimationFrames("hit", 20, 0, 4, this.sprite, true)
     };
 
     // Sprite pivot is set to center
@@ -213,17 +218,34 @@ export class Living implements ILiving, IAttacker, IAnimable {
 }
 
 export class Human extends Living {
-  constructor(maxHp: number, sprite: Phaser.Sprite, x : number, y : number, scale : number = 1, startAnimationName : string = 'idle') {
-    super(maxHp, sprite, x, y, scale, startAnimationName);
+  static preload = (game : Phaser.Game) => {
+    game.load.spritesheet('player', 'assets/spritesheet/player.png', 64, 64);
+    game.load.audio('explosion', 'assets/sounds/explosion.mp3');
+    game.load.audio('arrow_shoot', 'assets/sounds/arrow_shoot.mp3');
+  };
+
+  constructor(game : Phaser.Game, maxHp: number, x : number, y : number, scale : number = 1, startAnimationName : string = 'idle') {
+    super(game, maxHp, 'player', x, y, scale, startAnimationName);
+    let explosion : Phaser.Sound = this.sprite.game.add.audio('explosion');
+    let arrowShoot : Phaser.Sound = this.sprite.game.add.audio('arrow_shoot');
+    this.animations.attack = new A.CustomAnimationGroup("attack", 16, 9, 2, this.sprite, arrowShoot);
+    this.animations.hit = new A.CustomAnimationFrames("hit", 20, 0, 4, this.sprite, true, explosion);
     this.changeDirection('right', true);
   }
 }
 
 export class Orc extends Living {
-  constructor(maxHp: number, sprite: Phaser.Sprite, x : number, y : number, scale : number = 1, startAnimationName : string = 'idle') {
-    super(maxHp, sprite, x, y, scale, startAnimationName);
+  static preload = (game : Phaser.Game) => {
+    game.load.spritesheet('orc', 'assets/spritesheet/orc.png', 64, 64);
+    game.load.audio('arrow_hit', 'assets/sounds/arrow_hit.mp3');
+  };
+
+  constructor(game : Phaser.Game, maxHp: number, x : number, y : number, scale : number = 1, startAnimationName : string = 'idle') {
+    super(game, maxHp, 'orc', x, y, scale, startAnimationName);
     // use spellcast animations for attack
-    this.animations.attack = new A.CustomAnimationGroup("attack", 0, 0, 7, sprite);
+    let arrowHit : Phaser.Sound = this.sprite.game.add.audio('arrow_hit');
+    this.animations.attack = new A.CustomAnimationGroup("attack", 0, 0, 7, this.sprite);
+    this.animations.hit = new A.CustomAnimationFrames("hit", 20, 0, 4, this.sprite, true, arrowHit);
     this.changeDirection('left', true);
   }
 }

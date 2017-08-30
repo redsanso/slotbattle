@@ -37,17 +37,10 @@ export class SlotsState implements GameState {
 
   PLAYER_MARGIN_OFFSET: number = 120;
 
-  arrowShootSound: Phaser.Sound;
-  arrowHitSound: Phaser.Sound;
-  explosionSound: Phaser.Sound;
-
   /* Lifecycle events */
 
   preload = () => {
     // http://gaurav.munjal.us/Universal-LPC-Spritesheet-Character-Generator/
-    this.game.load.spritesheet('player', 'assets/spritesheet/player.png', 64, 64);
-    this.game.load.spritesheet('orc', 'assets/spritesheet/orc.png', 64, 64);
-    this.game.load.spritesheet('explosion', 'assets/spritesheet/Explosion.png', 96, 96);
 
     this.game.load.image('slotbar', 'assets/png/Slotbar.png');
     this.game.load.image('attackButton', 'assets/png/AttackButton.png');
@@ -59,14 +52,12 @@ export class SlotsState implements GameState {
       this.coinSounds.push(this.game.load.audio(`coin${i + 1}`, `assets/sounds/coin${i + 1}.wav`));
     }
 
-    this.game.load.audio('arrow_hit', 'assets/sounds/arrow_hit.mp3');
-    this.game.load.audio('arrow_shoot', 'assets/sounds/arrow_shoot.mp3');
-    this.game.load.audio('explosion', 'assets/sounds/explosion.mp3');
+    Human.preload(this.game);
+    Orc.preload(this.game);
   };
 
   create = () => {
     // cached
-    this.addSounds();
     this.addSlots();
     this.addLog();
     this.addPlayer();
@@ -104,12 +95,6 @@ export class SlotsState implements GameState {
 
   /* Utils */
 
-  addSounds(){
-    this.arrowShootSound = this.game.add.audio('arrow_shoot');
-    this.arrowHitSound = this.game.add.audio('arrow_hit');
-    this.explosionSound = this.game.add.audio('explosion');
-  }
-
   addBackButton() {
     this.backButton = this.game.add.button(20, 10, 'backButton', () => {
       this.onBackButtonClick();
@@ -131,16 +116,14 @@ export class SlotsState implements GameState {
   }
 
   addPlayer() {
-    let player = this.game.add.sprite(this.game.world.width, this.game.world.height, 'player');
     let scale = 2;
-    this.player = new Human(100, player, this.PLAYER_MARGIN_OFFSET, (player.game.world.height - GROUND_LEVEL), scale, 'idle');
+    this.player = new Human(this.game, 100, this.PLAYER_MARGIN_OFFSET, (this.game.world.height - GROUND_LEVEL), scale, 'idle');
     this.addEventMessage('white', `A Human joined the match.`);
   }
 
   addEnemy() {
-    let enemy = this.game.add.sprite(this.game.world.width, this.game.world.height, 'orc');
     let scale = 2;
-    this.enemy = new Orc(100, enemy, this.game.world.width - this.PLAYER_MARGIN_OFFSET, (enemy.game.world.height - GROUND_LEVEL), scale, 'idle');
+    this.enemy = new Orc(this.game, 100, this.game.world.width - this.PLAYER_MARGIN_OFFSET, (this.game.world.height - GROUND_LEVEL), scale, 'idle');
     this.addEventMessage('white', `An Orc joined the match.`);
   }
 
@@ -300,7 +283,6 @@ export class SlotsState implements GameState {
 
   performPlayerAttack = () => {
     let damage = this.getTotalSlotPoints();
-    this.arrowShootSound.play();
     this.player.attack(damage, this.enemy).onComplete.addOnce(() => {
       this.addEventMessage('yellow', `Player hits enemy for ${damage * this.player.attackModifier} damage`);
       if (this.enemy.isDead()) {
@@ -345,7 +327,6 @@ export class SlotsState implements GameState {
   }
 
   hitEnemy(){
-    this.arrowHitSound.play();
     this.enemy.hit().onComplete.addOnce(() => {
       this.performEnemyCounterattack();
     });
@@ -372,7 +353,6 @@ export class SlotsState implements GameState {
     explosion.animations.play('boom', 12, false).onComplete.add(() => {
       explosion.destroy();
     });
-    this.explosionSound.play();
   }
 
   // external hooks
