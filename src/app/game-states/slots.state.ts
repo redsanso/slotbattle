@@ -103,8 +103,8 @@ export class SlotsState implements GameState {
 
   addNextEnemyButton() {
     let buttonSrc = this.game.cache.getImage('nextEnemyButton');
-    let buttonX = this.enemy.sprite.position.x - (buttonSrc.width / 2);
-    let buttonY = this.enemy.sprite.position.y - (this.enemy.sprite.height * 2 / 3) - (buttonSrc.height / 4);
+    let buttonX = this.enemy.healthBarGroup.position.x + (this.enemy.healthBG.width / 2);
+    let buttonY = this.enemy.healthBarGroup.position.y + (this.enemy.healthBG.height / 2);
     this.nextEnemyButton = this.game.add.button(buttonX, buttonY, 'nextEnemyButton', () => {
       this.nextEnemyButton.destroy();
       this.nextEnemyButton = null;
@@ -113,6 +113,7 @@ export class SlotsState implements GameState {
       this.slotButton.enabled = true;
       this.slotButton.visible = true;
     });
+    this.nextEnemyButton.anchor.setTo(.5);
   }
 
   addPlayer() {

@@ -48,6 +48,7 @@ export class Living implements ILiving, IAttacker, IAnimable {
   healthBarGroup: Phaser.Group;
   healthBG : Phaser.Sprite;
   healthFG : Phaser.Sprite;
+  healthBarText : Phaser.Text;
 
   static preload : (game : Phaser.Game) => void;
   static create : (game : Phaser.Game) => void;
@@ -94,16 +95,21 @@ export class Living implements ILiving, IAttacker, IAnimable {
     let HB_WIDTH = 128;
     let HB_HEIGHT = 24;
     let HB_X = this.sprite.position.x - (HB_WIDTH / 2);
-    let HB_Y = this.sprite.position.y - (this.sprite.height * 2 / 3);
+    let HB_Y = this.sprite.position.y - (this.sprite.height * 4 / 5);
     this.healthBarGroup.position.setTo(HB_X, HB_Y);
 
     let healthBGBitmap = this._getHealthBarLayer('#000000', HB_WIDTH, HB_HEIGHT);
     this.healthBG = this.sprite.game.add.sprite(0, 0, healthBGBitmap);
     this.healthBarGroup.add(this.healthBG);
 
-    let healthFGBitmap = this._getHealthBarLayer('#ff0000', HB_WIDTH, HB_HEIGHT, 2);
+    let healthFGBitmap = this._getHealthBarLayer('firebrick', HB_WIDTH, HB_HEIGHT, 2);
     this.healthFG = this.sprite.game.add.sprite(0, 0, healthFGBitmap);
     this.healthBarGroup.add(this.healthFG);
+
+    let healthBarTextStyle = { font: '16px Courier', fill : 'firebrick', strokeThickness : 4, stroke : '#000000' };
+    this.healthBarText = this.sprite.game.add.text(HB_WIDTH / 2, -8, `HP: ${this.currentHP}/${this.maxHP}`, healthBarTextStyle);
+    this.healthBarText.anchor.setTo(.5);
+    this.healthBarGroup.add(this.healthBarText);
 
     this.destroyables.push(this.healthBarGroup);
   }
@@ -141,6 +147,7 @@ export class Living implements ILiving, IAttacker, IAnimable {
 
   _updateHealthBar(){
     this.healthFG.scale.setTo((this.currentHP / this.maxHP), 1);
+    this.healthBarText.text = `HP: ${this.currentHP}/${this.maxHP}`;
   }
 
   // interfaces method implementations
@@ -254,6 +261,8 @@ export class Human extends Living implements ILevelable {
   expBarGroup : Phaser.Group;
   expBG : Phaser.Sprite;
   expFG : Phaser.Sprite;
+  expBarText : Phaser.Text;
+  levelText : Phaser.Text;
 
   constructor(game : Phaser.Game, maxHp: number, x : number, y : number, scale : number = 1, startAnimationName : string = 'idle') {
     super(game, maxHp, 'player', x, y, scale, startAnimationName);
@@ -297,8 +306,8 @@ export class Human extends Living implements ILevelable {
     this.expBarGroup = this.sprite.game.add.group();
     let XB_WIDTH = 128;
     let XB_HEIGHT = 8;
-    let XB_X = this.sprite.position.x - (XB_WIDTH / 2);
-    let XB_Y = this.sprite.position.y - (this.sprite.height * 2 / 3) + 20;
+    let XB_X = this.healthBarGroup.position.x;
+    let XB_Y = this.healthBarGroup.position.y + 20;
     this.expBarGroup.position.setTo(XB_X, XB_Y);
 
     let expBGBitmap = this._getEXPBarLayer('#000000', XB_WIDTH, XB_HEIGHT);
@@ -308,6 +317,16 @@ export class Human extends Living implements ILevelable {
     let expFGBitmap = this._getEXPBarLayer('#8a2be2', XB_WIDTH, XB_HEIGHT, 2);
     this.expFG = this.sprite.game.add.sprite(0, 0, expFGBitmap);
     this.expBarGroup.add(this.expFG);
+    
+    let expBarTextStyle = { font: '14px Courier', fill : '#8a2be2', strokeThickness : 4, stroke : '#000000' };
+    this.expBarText = this.sprite.game.add.text(XB_WIDTH / 2, 20, `EXP: ${this.currentEXP}/${this.nextLevelEXP}`, expBarTextStyle);
+    this.expBarText.anchor.setTo(.5);
+    this.expBarGroup.add(this.expBarText);
+
+    let levelTextStyle = { font: '12px Courier', fill : 'silver', strokeThickness : 4, stroke : '#000000' };
+    this.levelText = this.sprite.game.add.text(XB_WIDTH / 2, 36, `LVL: ${this.level}`, levelTextStyle);
+    this.levelText.anchor.setTo(.5);
+    this.expBarGroup.add(this.levelText);
 
     this.destroyables.push(this.expBarGroup);
   }
@@ -322,8 +341,8 @@ export class Human extends Living implements ILevelable {
   _updateEXPBar(){
     let maxFGWidth = this.expBG.width - 4;
     let expFGWIDTH = (this.currentEXP / this.nextLevelEXP) * maxFGWidth;
-    console.log(`bar width = ${expFGWIDTH} on ${maxFGWidth}`);
     this.expFG.width = expFGWIDTH;
+    this.expBarText.text = `EXP: ${this.currentEXP}/${this.nextLevelEXP}`;
   }
 }
 
