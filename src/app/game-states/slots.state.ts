@@ -103,8 +103,8 @@ export class SlotsState implements GameState {
 
   addNextEnemyButton() {
     let buttonSrc = this.game.cache.getImage('nextEnemyButton');
-    let buttonX = this.enemy.sprite.position.x - (buttonSrc.width / 2);
-    let buttonY = this.enemy.sprite.position.y - (this.enemy.sprite.height * 2 / 3) - (buttonSrc.height / 4);
+    let buttonX = this.enemy.healthBarGroup.position.x + (this.enemy.healthBG.width / 2);
+    let buttonY = this.enemy.healthBarGroup.position.y + (this.enemy.healthBG.height / 2);
     this.nextEnemyButton = this.game.add.button(buttonX, buttonY, 'nextEnemyButton', () => {
       this.nextEnemyButton.destroy();
       this.nextEnemyButton = null;
@@ -113,11 +113,14 @@ export class SlotsState implements GameState {
       this.slotButton.enabled = true;
       this.slotButton.visible = true;
     });
+    this.nextEnemyButton.anchor.setTo(.5);
   }
 
   addPlayer() {
     let scale = 2;
     this.player = new Human(this.game, 100, this.PLAYER_MARGIN_OFFSET, (this.game.world.height - GROUND_LEVEL), scale, 'idle');
+    this.player.onGainEXP = (amount : number) => this.addEventMessage('darkslateblue', `Player is rewarded with ${amount} exp points.`);
+    this.player.onLevelUp = () => this.addEventMessage('slateblue', `Player reaches level ${this.player.level}!\nAny damage is now multiplied by ${this.player.attackModifier}!`);
     this.addEventMessage('white', `A Human joined the match.`);
   }
 
@@ -232,6 +235,9 @@ export class SlotsState implements GameState {
 
     listView.scroller.events.onComplete.add(onScrollComplete);
 
+    /* Slot can now be triggered only by clicking on Attack button */
+    listView.scroller.clickObject.inputEnabled = false;
+
     this.slotScrollers.push(listView);
   }
 
@@ -281,10 +287,22 @@ export class SlotsState implements GameState {
     }, 0);
   }
 
+  /* If [coinValue] occurs more than 2 times, a bonus of Math.pow(coinValue, count) is added to total slot damage */
+  getBonusPoints(){
+    let groups = _.countBy(this.slotScrollers, 'slotValue');    
+    return _.sumBy(Object.keys(groups), (slotValueKey : string) => {
+      if(groups[slotValueKey] <= 2)
+        return 0;
+
+      return Math.pow(parseInt(slotValueKey), groups[slotValueKey]);
+    });
+  }
+
   performPlayerAttack = () => {
     let damage = this.getTotalSlotPoints();
-    this.player.attack(damage, this.enemy).onComplete.addOnce(() => {
-      this.addEventMessage('yellow', `Player hits enemy for ${damage * this.player.attackModifier} damage`);
+    let bonus = this.getBonusPoints();
+    this.player.attack(damage, this.enemy, bonus).onComplete.addOnce(() => {
+      this.addEventMessage('yellow', `Player hits enemy for ${Math.ceil(damage * this.player.attackModifier)} damage + ${bonus} bonus!`);
       if (this.enemy.isDead()) {
         this.randomHealPlayer();
         this.killEnemy();
@@ -300,9 +318,8 @@ export class SlotsState implements GameState {
 
   performEnemyCounterattack(){
     let enemyDamage = Math.ceil(Math.random() * 20);
-    this.displayPlayerExplosion();
-    this.enemy.attack(enemyDamage, this.player).onComplete.addOnce(() => {
-      this.addEventMessage('darkred', `Enemy hits player for ${enemyDamage * this.enemy.attackModifier} damage.`);
+    this.enemy.explosionAttack(enemyDamage, this.player).onComplete.addOnce(() => {
+      this.addEventMessage('firebrick', `Enemy hits player for ${Math.ceil(enemyDamage * this.player.attackModifier)} damage.`);
       if (this.player.isDead()) {
         this.killPlayer();
       } else {
@@ -333,26 +350,24 @@ export class SlotsState implements GameState {
   }
 
   killPlayer(){
-    this.addEventMessage('darkred', `Player is dead :(`);
+    this.addEventMessage('firebrick', `Player is dead :(`);
     this.player.die().onComplete.addOnce(() => {
-      this.onBackButtonClick();
+      this.slotButton.enabled = false;
+      this.slotButton.visible = false;
     });
   }
 
   killEnemy(){
     this.enemy.die().onComplete.addOnce(() => {
       this.addEventMessage('green', `Enemy is dead!\n`);
+      this.rewardEXP();
       this.addNextEnemyButton();
     });
   }
 
-  displayPlayerExplosion(){
-    let explosion = this.game.add.sprite(this.player.sprite.position.x, this.player.sprite.position.y, 'explosion');
-    explosion.anchor.setTo(.5);
-    explosion.animations.add('boom', _.range(0, 12));
-    explosion.animations.play('boom', 12, false).onComplete.add(() => {
-      explosion.destroy();
-    });
+  rewardEXP(){
+    let exp = Math.ceil(Math.random() * 10 * this.player.level);
+    this.player.gainEXP(exp);
   }
 
   // external hooks
