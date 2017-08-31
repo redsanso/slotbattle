@@ -299,6 +299,7 @@ export class Human extends Living implements ILevelable {
   levelUp = () => {
     this.level++;
     this.attackModifier += .2 * this.level;
+    this.levelText.text = `LVL: ${this.level}`;
     this.onLevelUp();
   };
 
