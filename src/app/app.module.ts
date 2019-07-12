@@ -8,6 +8,7 @@ import { StartComponent } from "./start/start.component";
 import { GameModule } from "./game/game.module";
 
 let routes : Routes = [
+  { path : '', redirectTo : 'start', pathMatch : 'full' },
   { path : 'start', component : StartComponent, pathMatch : 'full' }
 ];
 

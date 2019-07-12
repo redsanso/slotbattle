@@ -18,7 +18,7 @@ export class GameComponent implements OnInit {
   }
 
   ngOnInit() {
-
+    
   }
 
   ngOnChanges(changes: { [propName: string]: SimpleChange }) {
